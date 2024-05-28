@@ -1,0 +1,8 @@
+# C# output files
+bin/
+obj/
+.vs
+
+# TS/JS output files
+node_modules
+client/vscode/out/
