@@ -36,7 +36,7 @@ public class LanguageServerTests
             Capabilities = new()
         };
 
-        // Simply completing the request validates we can
+        // Simply completing the request validates we can initialize
         await server.GetTestAccessor().ExecuteRequestAsync<InitializeParams, InitializeResult>(Methods.InitializeName, LanguageServerConstants.DefaultLanguageName, initializeParams, new CancellationToken());
     }
 }
