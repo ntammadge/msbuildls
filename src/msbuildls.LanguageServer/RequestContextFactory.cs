@@ -4,11 +4,11 @@ using Microsoft.CommonLanguageServerProtocol.Framework;
 
 namespace msbuildls.LanguageServer;
 
-internal class ExampleRequestContextFactory : AbstractRequestContextFactory<RequestContext>
+internal class RequestContextFactory : AbstractRequestContextFactory<RequestContext>
 {
     private readonly ILspServices _lspServices;
 
-    public ExampleRequestContextFactory(ILspServices lspServices)
+    public RequestContextFactory(ILspServices lspServices)
     {
         _lspServices = lspServices;
     }
