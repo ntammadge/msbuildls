@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="msbuildls" />
+    <InternalsVisibleTo Include="msbuildls.LanguageServer.Tests" />
   </ItemGroup>
 
 </Project>
