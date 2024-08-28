@@ -17,7 +17,7 @@
 		"vscode": "^1.75.0"
 	},
 	"activationEvents": [
-		"onLanguage:xml"
+		"workspaceContains:{**/*.props,**/*.targets,**/*.*proj}"
 	],
 	"main": "./client/vscode/out/extension",
 	"contributes": {
