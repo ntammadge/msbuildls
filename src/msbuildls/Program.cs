@@ -1,16 +1,37 @@
-﻿using System;
-using Newtonsoft.Json;
-using msbuildls.LanguageServer;
-using StreamJsonRpc;
+using System;
+using System.IO;
+using Microsoft.Extensions.Logging;
+using msbuildls;
+using OmniSharp.Extensions.LanguageServer.Server;
+using Serilog;
 
-var stdIn = Console.OpenStandardInput();
-var stdOut = Console.OpenStandardOutput();
 
-var rpc = new JsonRpc(stdOut, stdIn);
-var serializer = new JsonSerializer();
-var lspLogger = new LspLogger();
-var server = new MSBuildLanguageServer(rpc, serializer, lspLogger);
+// while (!Debugger.IsAttached)
+// {
+//     Debugger.Launch();
+// }
 
-rpc.AddLocalRpcTarget(server);
-rpc.StartListening();
-await rpc.Completion;
+var logFilePath = Path.Combine(Path.GetTempPath(), "msbuildls.log");
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.File(logFilePath, rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Verbose()
+    .CreateLogger();
+
+Log.Logger.Information("Startup");
+
+var server = await LanguageServer.From(
+    options =>
+        options
+            .WithInput(Console.OpenStandardInput())
+            .WithOutput(Console.OpenStandardOutput())
+            .ConfigureLogging(logBuilder => logBuilder
+                .AddSerilog(Log.Logger)
+                .AddLanguageProtocolLogging()
+                .SetMinimumLevel(LogLevel.Debug)
+            )
+            .WithHandler<TextDocumentHandler>()
+).ConfigureAwait(false);
+
+await server.WaitForExit.ConfigureAwait(false);

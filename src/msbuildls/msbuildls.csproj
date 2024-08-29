@@ -1,12 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
-    <ProjectReference Include="..\msbuildls.LanguageServer\msbuildls.LanguageServer.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Required to avoid mismatched versions from msbuildls.LanguageServer. Causes runtime exceptions in the extension otherwise -->
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.10.48" />
+    <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+    <PackageReference Include="Serilog" Version="4.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
