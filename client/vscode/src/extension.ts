@@ -5,7 +5,6 @@
 
 import * as path from 'path';
 import { workspace, ExtensionContext } from 'vscode';
-
 import {
 	LanguageClient,
 	LanguageClientOptions,
@@ -37,17 +36,11 @@ export function activate(context: ExtensionContext) {
 
 	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
-		// Register the server for plain text documents
+		// Register the server for xml documents with well-known msbuild file extensions
 		documentSelector: [
 			{
-				scheme: 'file',
 				language: 'xml',
-				pattern: '**​/*.{props,targets}'
-			},
-			{
-				scheme: 'file',
-				language: 'xml',
-				pattern: '**​/*.*proj'
+				pattern: '{**/*.props,**/*.targets,**/*.*proj}'
 			}
 		],
 		synchronize: {
