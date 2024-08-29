@@ -3,9 +3,19 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": ".NET Core Attach",
+			"name": "Attatch to server",
 			"type": "coreclr",
-			"request": "attach"
+			"request": "attach",
+			"justMyCode": false,
+			"processName": "msbuildls",
+			"symbolOptions": {
+				"searchPaths": [
+					"${workspaceRoot}/src/msbuildls",
+					"${workspaceRoot}/src/msbuildls.LanguageServer",
+				],
+				"searchMicrosoftSymbolServer": false,
+				"searchNuGetOrgSymbolServer": false
+			}
 		},
 		{
 			"type": "extensionHost",
