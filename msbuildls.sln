@@ -7,6 +7,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{34DBEDC5-E39
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "msbuildls", "src\msbuildls\msbuildls.csproj", "{E09F8D37-1FEC-42F0-81D9-C42FCCBC1F8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msbuildls.LanguageServer", "src\msbuildls.LanguageServer\msbuildls.LanguageServer.csproj", "{4CD12179-0662-4FEF-BB46-294C4B254DA2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5DE8AB57-E87A-4D35-BC96-C0841139D7A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "msbuildls.Tests", "test\msbuildls.Tests\msbuildls.Tests.csproj", "{F7E3B5CA-2F30-4A1E-BB3C-685000451B89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,11 +23,21 @@ Global
 		{E09F8D37-1FEC-42F0-81D9-C42FCCBC1F8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E09F8D37-1FEC-42F0-81D9-C42FCCBC1F8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E09F8D37-1FEC-42F0-81D9-C42FCCBC1F8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CD12179-0662-4FEF-BB46-294C4B254DA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CD12179-0662-4FEF-BB46-294C4B254DA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CD12179-0662-4FEF-BB46-294C4B254DA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CD12179-0662-4FEF-BB46-294C4B254DA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7E3B5CA-2F30-4A1E-BB3C-685000451B89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7E3B5CA-2F30-4A1E-BB3C-685000451B89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7E3B5CA-2F30-4A1E-BB3C-685000451B89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7E3B5CA-2F30-4A1E-BB3C-685000451B89}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E09F8D37-1FEC-42F0-81D9-C42FCCBC1F8C} = {34DBEDC5-E393-488C-8DAB-5FC146D9163B}
+		{4CD12179-0662-4FEF-BB46-294C4B254DA2} = {34DBEDC5-E393-488C-8DAB-5FC146D9163B}
+		{F7E3B5CA-2F30-4A1E-BB3C-685000451B89} = {5DE8AB57-E87A-4D35-BC96-C0841139D7A2}
 	EndGlobalSection
 EndGlobal

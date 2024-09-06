@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <TestProperty>foobar</TestProperty>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <TestItemGroup Include="foo.bar" />
+    </ItemGroup>
+
+    <Target Name="TestTarget">
+        <PropertyGroup>
+            <TestProperty2>foobar2</TestProperty2>
+        </PropertyGroup>
+    </Target>
+</Project>
