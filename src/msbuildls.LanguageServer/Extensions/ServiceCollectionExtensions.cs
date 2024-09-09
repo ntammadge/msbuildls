@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using msbuildls.LanguageServer.Symbols;
 
-namespace msbuildls.LanguageServer;
+namespace msbuildls.LanguageServer.Extensions;
 
 public static class ServiceCollectionExtensions
 {

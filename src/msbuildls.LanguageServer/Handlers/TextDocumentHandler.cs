@@ -10,7 +10,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
-namespace msbuildls;
+namespace msbuildls.LanguageServer.Handlers;
 
 internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 {

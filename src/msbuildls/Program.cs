@@ -1,8 +1,7 @@
 using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
-using msbuildls;
-using msbuildls.LanguageServer;
+using msbuildls.LanguageServer.Extensions;
 using OmniSharp.Extensions.LanguageServer.Server;
 using Serilog;
 
@@ -32,7 +31,7 @@ var server = await LanguageServer.From(
                 .AddLanguageProtocolLogging()
                 .SetMinimumLevel(LogLevel.Debug)
             )
-            .WithHandler<TextDocumentHandler>()
+            .AddTextDocumentHandlers()
             .WithServices(services =>
             {
                 services
