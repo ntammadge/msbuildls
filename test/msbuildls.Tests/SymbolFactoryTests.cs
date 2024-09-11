@@ -13,8 +13,20 @@ public class SymbolFactoryTests
     [Fact]
     public void CanMakePropertySymbol()
     {
-        var startLine = 3;
-        var startLineCharacter = 10;
+        var startLine = 2;
+        var startChar = 9;
+        var name = "TestProperty";
+        var expectedSymbol = new DocumentSymbol()
+        {
+            Name = name,
+            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+            Range = new Range(
+                startLine : startLine,
+                startCharacter: startChar,
+                endLine: startLine,
+                endCharacter: startChar + name.Length
+            )
+        };
 
         var symbolFactory = new SymbolFactory();
 
@@ -23,25 +35,25 @@ public class SymbolFactoryTests
 
         var propertySymbol = symbolFactory.MakePropertyFromNode(propertyNode);
 
-        Assert.Equal("TestProperty", propertySymbol.Name);
-        Assert.Equal(startLine, propertySymbol.Range.Start.Line);
-        Assert.Equal(startLineCharacter, propertySymbol.Range.Start.Character);
-        Assert.Equal(startLine, propertySymbol.Range.End.Line);
-        Assert.Equal(startLineCharacter + propertySymbol.Name.Length, propertySymbol.Range.End.Character);
-        Assert.Equal((SymbolKind)MsBuildSymbolKind.Property, propertySymbol.Kind);
+        Assert.Equal(expectedSymbol.Name, propertySymbol.Name);
+        Assert.Equal(expectedSymbol.Range.Start.Line, propertySymbol.Range.Start.Line);
+        Assert.Equal(expectedSymbol.Range.Start.Character, propertySymbol.Range.Start.Character);
+        Assert.Equal(expectedSymbol.Range.End.Line, propertySymbol.Range.End.Line);
+        Assert.Equal(expectedSymbol.Range.End.Character, propertySymbol.Range.End.Character);
+        Assert.Equal(expectedSymbol.Kind, propertySymbol.Kind);
     }
 
     [Fact]
     public void CanMakeProjectSymbol()
     {
         var name = KnownMsBuildNodes.Project;
-        var startLine = 1;
-        var startChar = 2;
+        var startLine = 0;
+        var startChar = 1;
         var expectedSymbol = new DocumentSymbol()
         {
             Name = name,
             Kind = (SymbolKind)MsBuildSymbolKind.Project,
-            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+            Range = new Range(
                 startLine: startLine,
                 startCharacter: startChar,
                 endLine: startLine,

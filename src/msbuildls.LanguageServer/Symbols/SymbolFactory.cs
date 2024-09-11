@@ -46,26 +46,37 @@ internal class SymbolFactory : ISymbolFactory
             }
         }
 
-        var lineInfo = (IXmlLineInfo)rootNode;
+        var range = MakeSymbolRange(rootNode);
         return new DocumentSymbol()
         {
             Name = rootNode.Name.LocalName,
             Children = new Container<DocumentSymbol>(childSymbols),
             Kind = (SymbolKind)MsBuildSymbolKind.Project,
-            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                new Position(lineInfo.LineNumber, lineInfo.LinePosition),
-                new Position(lineInfo.LineNumber, lineInfo.LinePosition + rootNode.Name.LocalName.Length))
+            Range = range,
+            SelectionRange = range
         };
     }
 
     public DocumentSymbol MakePropertyFromNode(XElement propertyNode)
     {
-        var lineInfo = (IXmlLineInfo)propertyNode;
+        var range = MakeSymbolRange(propertyNode);
         return new DocumentSymbol()
         {
             Name = propertyNode.Name.LocalName,
-            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(lineInfo.LineNumber, lineInfo.LinePosition), new Position(lineInfo.LineNumber, lineInfo.LinePosition + propertyNode.Name.LocalName.Length)),
+            Range = range,
+            SelectionRange = range,
             Kind =  (SymbolKind)MsBuildSymbolKind.Property
         };
+    }
+
+    private Range MakeSymbolRange(XElement node)
+    {
+        var lineInfo = (IXmlLineInfo)node;
+        var offset = -1; // VSCode LSP client 0-indexes position values. If multiple client support is added, this will have to update if those clients have 1-indexed positions
+
+        return new Range(
+            new Position(lineInfo.LineNumber + offset, lineInfo.LinePosition + offset),
+            new Position(lineInfo.LineNumber + offset, lineInfo.LinePosition + node.Name.LocalName.Length + offset)
+        );
     }
 }
