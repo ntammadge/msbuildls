@@ -22,11 +22,13 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     );
     private readonly ILogger<TextDocumentHandler> _logger;
     private readonly ISymbolFactory _symbolFactory;
+    private readonly ISymbolProvider _symbolProvider;
 
-    public TextDocumentHandler(ILogger<TextDocumentHandler> logger, ISymbolFactory symbolFactory)
+    public TextDocumentHandler(ILogger<TextDocumentHandler> logger, ISymbolFactory symbolFactory, ISymbolProvider symbolProvider)
     {
         _logger = logger;
         _symbolFactory = symbolFactory;
+        _symbolProvider = symbolProvider;
     }
 
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
@@ -38,8 +40,13 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     {
         _logger.LogInformation("Opened file: {filePath}", request.TextDocument.Uri.Path);
 
-        var xml = XElement.Parse(request.TextDocument.Text);
-        _symbolFactory.MakeDocumentSymbols(xml);
+        var xml = XElement.Parse(request.TextDocument.Text, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
+        var symbols = _symbolFactory.MakeDocumentSymbols(xml);
+
+        if (symbols != null)
+        {
+            _symbolProvider.AddOrUpdateDocumentSymbols(request.TextDocument.Uri.Path, symbols);
+        }
 
         return Unit.Task;
     }
