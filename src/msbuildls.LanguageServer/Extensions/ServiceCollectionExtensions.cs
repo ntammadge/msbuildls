@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSymbolResolutionServices(this IServiceCollection services)
     {
         return services
-            .AddSingleton<ISymbolFactory, SymbolFactory>();
+            .AddSingleton<ISymbolFactory, SymbolFactory>()
+            .AddSingleton<ISymbolProvider, SymbolProvider>();
     }
 }

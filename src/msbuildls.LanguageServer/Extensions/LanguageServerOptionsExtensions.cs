@@ -8,6 +8,7 @@ public static class LanguageServerOptionsExtensions
     public static LanguageServerOptions AddTextDocumentHandlers(this LanguageServerOptions options)
     {
         return options
-            .WithHandler<TextDocumentHandler>();
+            .WithHandler<TextDocumentHandler>()
+            .WithHandler<TextDocumentSymbolsHandler>();
     }
 }
