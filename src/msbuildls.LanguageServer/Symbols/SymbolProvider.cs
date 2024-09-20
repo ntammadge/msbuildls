@@ -1,27 +1,27 @@
 using System.Collections.Concurrent;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 
 namespace msbuildls.LanguageServer.Symbols;
 
 internal class SymbolProvider : ISymbolProvider
 {
-    private readonly ConcurrentDictionary<string, DocumentSymbol> _documentSymbolStore;
+    private readonly ConcurrentDictionary<string, Project> _fileSymbolStore;
 
     public SymbolProvider()
     {
-        _documentSymbolStore = new ConcurrentDictionary<string, DocumentSymbol>();
+        _fileSymbolStore = new ConcurrentDictionary<string, Project>();
     }
 
-    public void AddOrUpdateDocumentSymbols(string fileName, DocumentSymbol document)
+    public void AddOrUpdateSymbols(string fileName, Project fileSymbols)
     {
-        _documentSymbolStore.AddOrUpdate(fileName, document, (name, oldDocument) => document);
+        _fileSymbolStore.AddOrUpdate(fileName, fileSymbols, (name, oldFileSymbols) => fileSymbols);
     }
 
-    public SymbolInformationOrDocumentSymbolContainer? GetSymbolsForDocument(string fileName)
+    public Project? GetFileSymbols(string fileName)
     {
-        if (_documentSymbolStore.TryGetValue(fileName, out var documentSymbol))
+        if (_fileSymbolStore.TryGetValue(fileName, out var fileSymbols))
         {
-            return new SymbolInformationOrDocumentSymbolContainer(documentSymbol);
+            return fileSymbols;
         }
         return null;
     }

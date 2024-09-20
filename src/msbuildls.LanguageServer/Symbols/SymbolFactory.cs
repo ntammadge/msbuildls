@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
+using System.Xml.Serialization;
+using Microsoft.Extensions.Logging;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
@@ -25,58 +28,67 @@ internal enum MsBuildSymbolKind
 
 internal class SymbolFactory : ISymbolFactory
 {
-    public DocumentSymbol MakeDocumentSymbols(XElement rootNode)
+    private readonly int _symbolOffset = -1;
+    private readonly ILogger<ISymbolFactory> _logger;
+
+    public SymbolFactory(ILogger<ISymbolFactory> logger)
     {
-        if (rootNode.Name.LocalName != KnownMsBuildNodes.Project)
-        {
-            // Log an error indicating we received an incorrect XML hierarchy
-            // Consider return options
-            return null;
-        }
-
-        var childNodes = rootNode.Elements();
-        var childSymbols = new List<DocumentSymbol>();
-
-        foreach (var node in childNodes)
-        {
-            if (node.Name.LocalName == KnownMsBuildNodes.PropertyGroup)
-            {
-                var propertyNodes = node.Elements();
-                childSymbols.AddRange(propertyNodes.Select(propertyNode => MakePropertyFromNode(propertyNode)));
-            }
-        }
-
-        var range = MakeSymbolRange(rootNode);
-        return new DocumentSymbol()
-        {
-            Name = rootNode.Name.LocalName,
-            Children = new Container<DocumentSymbol>(childSymbols),
-            Kind = (SymbolKind)MsBuildSymbolKind.Project,
-            Range = range,
-            SelectionRange = range
-        };
+        _logger = logger;
     }
 
-    public DocumentSymbol MakePropertyFromNode(XElement propertyNode)
+    public Project? ParseDocument(TextDocumentItem textDocumentItem)
     {
-        var range = MakeSymbolRange(propertyNode);
-        return new DocumentSymbol()
+        var documentPath = textDocumentItem.Uri.Path;
+        _logger.LogInformation("Beginning deserialization of {documentPath}", documentPath);
+
+        var serializer = new XmlSerializer(typeof(Project));
+
+        using var reader = new StringReader(textDocumentItem.Text);
+        Project? project = null;
+
+        try
         {
-            Name = propertyNode.Name.LocalName,
-            Range = range,
-            SelectionRange = range,
-            Kind =  (SymbolKind)MsBuildSymbolKind.Property
-        };
+            project = (Project?)serializer.Deserialize(reader);
+            _logger.LogInformation("Completed deserialization of {documentPath}", documentPath);
+        }
+        catch(Exception e)
+        {
+            // Should the inner exception be used?
+            _logger.LogError("Unable to deserialize {documentPath}. Exception encountered: {exception}", documentPath, e.Message);
+        }
+
+        return project;
     }
 
-    private Range MakeSymbolRange(XElement node)
+    public SymbolInformationOrDocumentSymbolContainer SymbolsForFile(Project file)
     {
-        var lineInfo = (IXmlLineInfo)node;
-        var offset = -1; // VSCode LSP client 0-indexes position values. If multiple client support is added, this will have to update if those clients have 1-indexed positions
+        var documentSymbols = new List<DocumentSymbol>();
 
-        return new Range(
-            new Position(lineInfo.LineNumber + offset, lineInfo.LinePosition + offset),
-            new Position(lineInfo.LineNumber + offset, lineInfo.LinePosition + node.Name.LocalName.Length + offset)
-        );
+        if (file.PropertyGroups != null)
+        {
+            var propertySymbols = file.PropertyGroups
+                .SelectMany(propGroup => propGroup.Properties
+                    ?.Select(property =>
+                    {
+                        var startLine = property.StartLine + _symbolOffset;
+                        var startChar = property.StartChar + _symbolOffset;
+                        var endLine = property.EndLine + _symbolOffset;
+                        var endChar = property.EndChar + _symbolOffset;
+
+                        return new DocumentSymbol()
+                        {
+                            Name = property.Name,
+                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startLine, startChar, endLine, endChar),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startLine, startChar, startLine, startChar + property.Name.Length)
+                        };
+                    }) ?? []);
+                // TODO: filter all occurrences of a property after the first occurrence of a prop
+            documentSymbols.AddRange(propertySymbols);
+        }
+
+        var symbols = documentSymbols.Select(symbol => SymbolInformationOrDocumentSymbol.Create(symbol));
+        var symbolContainer = SymbolInformationOrDocumentSymbolContainer.From(symbols);
+        return symbolContainer;
     }
 }

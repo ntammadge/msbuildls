@@ -1,5 +1,5 @@
 using msbuildls.LanguageServer.Symbols;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 using Xunit;
 
 namespace msbuildls.Tests.Symbols;
@@ -11,17 +11,13 @@ public class SymbolProviderTests
     {
         var symbolProvider = new SymbolProvider();
         var docName = "test.targets";
-        var expectedSymbol = new DocumentSymbol()
-        {
-            Name = "TestSymbol"
-        };
+        var factorySymbols = new Project();
 
-        symbolProvider.AddOrUpdateDocumentSymbols(docName, expectedSymbol);
-        var docSymbols = symbolProvider.GetSymbolsForDocument(docName);
+        symbolProvider.AddOrUpdateSymbols(docName, factorySymbols);
+        var providedFileSymbols = symbolProvider.GetFileSymbols(docName);
 
-        Assert.NotNull(docSymbols);
-        var docSymbol = Assert.Single(docSymbols);
-        Assert.Equal(expectedSymbol.Name, docSymbol?.DocumentSymbol?.Name);
+        Assert.NotNull(providedFileSymbols);
+        Assert.Equal(factorySymbols, providedFileSymbols);
     }
 
     [Fact]
@@ -29,23 +25,21 @@ public class SymbolProviderTests
     {
         var symbolProvider = new SymbolProvider();
         var docName = "test.targets";
-        var firstSymbol = new DocumentSymbol()
+        var firstFileSymbols = new Project();
+        var secondFileSymbols = new Project()
         {
-            Name = "TestSymbol"
-        };
-        var expectedSymbol = new DocumentSymbol()
-        {
-            Name = "TestSymbol2"
+            PropertyGroups = []
         };
 
-        symbolProvider.AddOrUpdateDocumentSymbols(docName, firstSymbol);
-        symbolProvider.AddOrUpdateDocumentSymbols(docName, expectedSymbol);
+        symbolProvider.AddOrUpdateSymbols(docName, firstFileSymbols);
+        symbolProvider.AddOrUpdateSymbols(docName, secondFileSymbols);
 
-        var docSymbols = symbolProvider.GetSymbolsForDocument(docName);
+        var providedFileSymbols = symbolProvider.GetFileSymbols(docName);
 
-        Assert.NotNull(docSymbols);
-        var docSymbol = Assert.Single(docSymbols);
-        Assert.Equal(expectedSymbol.Name, docSymbol?.DocumentSymbol?.Name);
+        Assert.NotNull(providedFileSymbols);
+        Assert.Equal(secondFileSymbols, providedFileSymbols);
+        Assert.NotNull(providedFileSymbols.PropertyGroups);
+        Assert.Equal(secondFileSymbols.PropertyGroups.Length, providedFileSymbols.PropertyGroups.Length);
     }
 
     [Fact]
@@ -53,8 +47,8 @@ public class SymbolProviderTests
     {
         var symbolProvider = new SymbolProvider();
 
-        var docSymbols = symbolProvider.GetSymbolsForDocument("DoesNotExist.targets");
+        var fileSymbols = symbolProvider.GetFileSymbols("DoesNotExist.targets");
 
-        Assert.Null(docSymbols);
+        Assert.Null(fileSymbols);
     }
 }

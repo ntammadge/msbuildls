@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using msbuildls.LanguageServer.Symbols;
@@ -24,7 +23,11 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     private readonly ISymbolFactory _symbolFactory;
     private readonly ISymbolProvider _symbolProvider;
 
-    public TextDocumentHandler(ILogger<TextDocumentHandler> logger, ISymbolFactory symbolFactory, ISymbolProvider symbolProvider)
+    public TextDocumentHandler(
+        ILogger<TextDocumentHandler> logger,
+        ISymbolFactory symbolFactory,
+        ISymbolProvider symbolProvider
+        )
     {
         _logger = logger;
         _symbolFactory = symbolFactory;
@@ -40,12 +43,10 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     {
         _logger.LogInformation("Opened file: {filePath}", request.TextDocument.Uri.Path);
 
-        var xml = XElement.Parse(request.TextDocument.Text, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
-        var symbols = _symbolFactory.MakeDocumentSymbols(xml);
-
-        if (symbols != null)
+        var docSymbols = _symbolFactory.ParseDocument(request.TextDocument);
+        if (docSymbols != null)
         {
-            _symbolProvider.AddOrUpdateDocumentSymbols(request.TextDocument.Uri.Path, symbols);
+            _symbolProvider.AddOrUpdateSymbols(request.TextDocument.Uri.Path, docSymbols);
         }
 
         return Unit.Task;
@@ -75,7 +76,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
             Change = TextDocumentSyncKind.Incremental,
             Save = new OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities.SaveOptions()
             {
-                IncludeText = false
+                IncludeText = false,
             }
         };
     }

@@ -1,102 +1,182 @@
+using System;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
+using Microsoft.Extensions.Logging.Abstractions;
 using msbuildls.LanguageServer.Symbols;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
-namespace msbuildls.Tests;
+namespace msbuildls.Tests.Symbols;
 
 
 public class SymbolFactoryTests
 {
+    private int _symbolOffset = -1;
+
+    private string GetFullyQualifiedTestDataFilePath(string fileName)
+    {
+        var relativeDirectory = @"..\..\..\..\testData\SymbolFactoryTests";
+        return Path.GetFullPath(Path.Combine(relativeDirectory, fileName));
+    }
+
     [Fact]
     public void CanMakePropertySymbol()
     {
-        var startLine = 2;
-        var startChar = 9;
-        var name = "TestProperty";
-        var expectedSymbol = new DocumentSymbol()
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var property = new Property()
         {
-            Name = name,
-            Kind = (SymbolKind)MsBuildSymbolKind.Property,
-            Range = new Range(
-                startLine : startLine,
-                startCharacter: startChar,
-                endLine: startLine,
-                endCharacter: startChar + name.Length
-            )
+            Name = "TestProperty",
+            Value = "testValue",
+            StartLine = 1,
+            StartChar = 2,
+            EndLine = 1,
+            EndChar = 30,
+        };
+        var project = new Project()
+        {
+            PropertyGroups = [
+                new PropertyGroup()
+                {
+                    Properties = [ property ]
+                }
+            ]
         };
 
-        var symbolFactory = new SymbolFactory();
-
-        var xml = XElement.Parse(File.ReadAllText(@"..\..\..\..\testData\SymbolFactoryTests\singleProperty.props"), LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
-        var propertyNode = xml.Descendants("TestProperty").First();
-
-        var propertySymbol = symbolFactory.MakePropertyFromNode(propertyNode);
-
-        Assert.Equal(expectedSymbol.Name, propertySymbol.Name);
-        Assert.Equal(expectedSymbol.Range.Start.Line, propertySymbol.Range.Start.Line);
-        Assert.Equal(expectedSymbol.Range.Start.Character, propertySymbol.Range.Start.Character);
-        Assert.Equal(expectedSymbol.Range.End.Line, propertySymbol.Range.End.Line);
-        Assert.Equal(expectedSymbol.Range.End.Character, propertySymbol.Range.End.Character);
-        Assert.Equal(expectedSymbol.Kind, propertySymbol.Kind);
+        var projectSymbols = symbolFactory.SymbolsForFile(project);
+        Assert.NotNull(projectSymbols);
+        var propertySymbol = Assert.Single(projectSymbols);
+        Assert.NotNull(propertySymbol);
+        Assert.NotNull(propertySymbol.DocumentSymbol);
+        Assert.Null(propertySymbol.SymbolInformation);
+        Assert.Equal(property.Name, propertySymbol.DocumentSymbol.Name);
+        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.Range.Start.Line);
+        Assert.Equal(property.StartChar + _symbolOffset, propertySymbol.DocumentSymbol.Range.Start.Character);
+        Assert.Equal(property.EndLine + _symbolOffset, propertySymbol.DocumentSymbol.Range.End.Line);
+        Assert.Equal(property.EndChar + _symbolOffset, propertySymbol.DocumentSymbol.Range.End.Character);
+        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.Start.Line);
+        Assert.Equal(property.StartChar + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.Start.Character);
+        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Line);
+        Assert.Equal(property.StartChar + property.Name.Length + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Character);
     }
 
     [Fact]
-    public void CanMakeProjectSymbol()
+    public void PropertySymbolCreationDoesNotUpdateInternalLineData()
     {
-        var name = KnownMsBuildNodes.Project;
-        var startLine = 0;
+        var startLine = 1;
         var startChar = 1;
-        var expectedSymbol = new DocumentSymbol()
+        var endLine = 1;
+        var endChar = 30;
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var property = new Property()
         {
-            Name = name,
-            Kind = (SymbolKind)MsBuildSymbolKind.Project,
-            Range = new Range(
-                startLine: startLine,
-                startCharacter: startChar,
-                endLine: startLine,
-                endCharacter: startChar + name.Length)
+            Name = "TestProperty",
+            Value = "testValue",
+            StartLine = startLine,
+            StartChar = startChar,
+            EndLine = endLine,
+            EndChar = endChar,
+        };
+        var project = new Project()
+        {
+            PropertyGroups = [
+                new PropertyGroup()
+                {
+                    Properties = [ property ]
+                }
+            ]
         };
 
-        var symbolFactory = new SymbolFactory();
-        var xml = XElement.Parse(File.ReadAllText(@"..\..\..\..\testData\SymbolFactoryTests\simpleProject.props"), LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
+        symbolFactory.SymbolsForFile(project);
 
-        var documentSymbol = symbolFactory.MakeDocumentSymbols(xml);
-
-        Assert.Equal(expectedSymbol.Name, documentSymbol.Name);
-        Assert.Equal(expectedSymbol.Kind, documentSymbol.Kind);
-        Assert.Equal(expectedSymbol.Range.Start.Line, documentSymbol.Range.Start.Line);
-        Assert.Equal(expectedSymbol.Range.Start.Character, documentSymbol.Range.Start.Character);
-        Assert.Equal(expectedSymbol.Range.End.Line, documentSymbol.Range.End.Line);
-        Assert.Equal(expectedSymbol.Range.End.Character, documentSymbol.Range.End.Character);
+        Assert.Equal(startLine, property.StartLine);
+        Assert.Equal(startChar, property.StartChar);
+        Assert.Equal(endLine, property.EndLine);
+        Assert.Equal(endChar, property.EndChar);
     }
 
     [Fact]
-    public void CanNestPropertiesOnProject()
+    public void CanParseSimpleFile()
     {
-        var symbolFactory = new SymbolFactory();
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("project.props");
 
-        var xml = XElement.Parse(File.ReadAllText(@"..\..\..\..\testData\SymbolFactoryTests\singleProperty.props"), LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
-        var projectSymbol = symbolFactory.MakeDocumentSymbols(xml);
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
 
-        Assert.NotNull(projectSymbol.Children);
-        var propertySymbol = Assert.Single(projectSymbol.Children);
-
-        Assert.Equal("TestProperty", propertySymbol.Name);
-        Assert.Equal((SymbolKind)MsBuildSymbolKind.Property, propertySymbol.Kind);
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.NotNull(fileSymbols);
+        Assert.Null(fileSymbols.PropertyGroups);
     }
 
     [Fact]
-    public void DoNotMakePropertyGroupSymbol()
+    public void CanParseEmptyFile()
     {
-        var symbolFactory = new SymbolFactory();
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(@"C:\Empty.targets"),
+            Text = ""
+        };
 
-        var xml = XElement.Parse(File.ReadAllText(@"..\..\..\..\testData\SymbolFactoryTests\singleProperty.props"), LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
-        var projectSymbol = symbolFactory.MakeDocumentSymbols(xml);
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.Null(fileSymbols);
+    }
 
-        Assert.NotNull(projectSymbol.Children);
-        Assert.DoesNotContain(projectSymbol.Children, child => child.Name == KnownMsBuildNodes.PropertyGroup);
+    [Fact]
+    public void CanParsePropertiesOnProjectNode()
+    {
+        var expectedProperty = new Property()
+        {
+            Name = "TestProperty",
+            Value = "testValue",
+            StartLine = 3,
+            StartChar = 10,
+            EndLine = 3,
+            EndChar = 46
+        };
+
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("property.props");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.PropertyGroups);
+        var propGroup = Assert.Single(fileSymbols.PropertyGroups);
+        Assert.NotNull(propGroup.Properties);
+        var parsedProperty = Assert.Single(propGroup.Properties);
+        Assert.Equal(expectedProperty.Name, parsedProperty.Name);
+        Assert.Equal(expectedProperty.Value, parsedProperty.Value);
+        Assert.Equal(expectedProperty.StartLine, parsedProperty.StartLine);
+        Assert.Equal(expectedProperty.StartChar, parsedProperty.StartChar);
+        Assert.Equal(expectedProperty.EndLine, parsedProperty.EndLine);
+        Assert.Equal(expectedProperty.EndChar, parsedProperty.EndChar);
+    }
+
+    [Fact]
+    public void CanParseEmptyPropertyGroup()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("propGroup.props");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.PropertyGroups);
+        var propGroup = Assert.Single(fileSymbols.PropertyGroups);
+        Assert.Null(propGroup.Properties);
     }
 }

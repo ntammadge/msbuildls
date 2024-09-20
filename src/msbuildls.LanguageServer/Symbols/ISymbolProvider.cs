@@ -1,9 +1,9 @@
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 
 namespace msbuildls.LanguageServer.Symbols;
 
 public interface ISymbolProvider
 {
-    SymbolInformationOrDocumentSymbolContainer? GetSymbolsForDocument(string fileName);
-    void AddOrUpdateDocumentSymbols(string fileName, DocumentSymbol document);
+    void AddOrUpdateSymbols(string fileName, Project file);
+    Project? GetFileSymbols(string fileName);
 }
