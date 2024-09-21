@@ -64,31 +64,30 @@ internal class SymbolFactory : ISymbolFactory
     {
         var documentSymbols = new List<DocumentSymbol>();
 
-        if (file.PropertyGroups != null)
-        {
-            var propertySymbols = file.PropertyGroups
-                .SelectMany(propGroup => propGroup.Properties
-                    ?.Select(property =>
-                    {
-                        var startLine = property.StartLine + _symbolOffset;
-                        var startChar = property.StartChar + _symbolOffset;
-                        var endLine = property.EndLine + _symbolOffset;
-                        var endChar = property.EndChar + _symbolOffset;
-
-                        return new DocumentSymbol()
-                        {
-                            Name = property.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startLine, startChar, endLine, endChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startLine, startChar, startLine, startChar + property.Name.Length)
-                        };
-                    }) ?? []);
-                // TODO: filter all occurrences of a property after the first occurrence of a prop
-            documentSymbols.AddRange(propertySymbols);
-        }
+        var propertySymbols = GetPropertySymbols(file.PropertyGroups);
+        documentSymbols.AddRange(propertySymbols);
 
         var symbols = documentSymbols.Select(symbol => SymbolInformationOrDocumentSymbol.Create(symbol));
         var symbolContainer = SymbolInformationOrDocumentSymbolContainer.From(symbols);
         return symbolContainer;
+    }
+
+    private IEnumerable<DocumentSymbol> GetPropertySymbols(IEnumerable<PropertyGroup>? propertyGroups)
+    {
+        return propertyGroups
+            ?.SelectMany(propGroup => propGroup.Properties
+                ?.Select(property =>
+                {
+                    var startPos = new Position(property.StartLine + _symbolOffset, property.StartChar + _symbolOffset);
+                    var endPos = new Position(property.EndLine + _symbolOffset, property.EndChar + _symbolOffset);
+
+                    return new DocumentSymbol()
+                    {
+                        Name = property.Name,
+                        Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos.Line, startPos.Character, startPos.Line, startPos.Character + property.Name.Length)
+                    };
+                }) ?? []) ?? [];
     }
 }
