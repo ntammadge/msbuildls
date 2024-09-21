@@ -23,7 +23,7 @@ internal static class KnownMsBuildNodes
 internal enum MsBuildSymbolKind
 {
     Property = SymbolKind.Property,
-    Project = SymbolKind.Namespace
+    Target = SymbolKind.Function
 }
 
 internal class SymbolFactory : ISymbolFactory
@@ -65,7 +65,10 @@ internal class SymbolFactory : ISymbolFactory
         var documentSymbols = new List<DocumentSymbol>();
 
         var propertySymbols = GetPropertySymbols(file.PropertyGroups);
-        documentSymbols.AddRange(propertySymbols);
+        documentSymbols.AddRange(GetPropertySymbols(file.PropertyGroups));
+
+        var targetSymbols = GetTargetSymbols(file.Targets);
+        documentSymbols.AddRange(GetTargetSymbols(file.Targets));
 
         var symbols = documentSymbols.Select(symbol => SymbolInformationOrDocumentSymbol.Create(symbol));
         var symbolContainer = SymbolInformationOrDocumentSymbolContainer.From(symbols);
@@ -89,5 +92,29 @@ internal class SymbolFactory : ISymbolFactory
                         SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos.Line, startPos.Character, startPos.Line, startPos.Character + property.Name.Length)
                     };
                 }) ?? []) ?? [];
+    }
+
+    private IEnumerable<DocumentSymbol> GetTargetSymbols(IEnumerable<Target>? targets)
+    {
+        return targets
+            ?.Select(target =>
+            {
+                var startPos = new Position(target.StartPosition.Line + _symbolOffset, target.StartPosition.Character + _symbolOffset);
+                var endPos = new Position(target.EndPosition.Line + _symbolOffset, target.EndPosition.Character + _symbolOffset);
+
+                var nestedSymbols = new List<DocumentSymbol>();
+
+                var propertySymbols = GetPropertySymbols(target.PropertyGroups);
+                nestedSymbols.AddRange(propertySymbols);
+
+                return new DocumentSymbol()
+                {
+                    Name = target.Name,
+                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
+                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, startPos), // Set selection range to the start of the element because the name attribute may not be the first attribute
+                    Children = nestedSymbols.Any() ? nestedSymbols : null
+                };
+            }) ?? [];
     }
 }

@@ -57,6 +57,7 @@ public class SymbolFactoryTests
         Assert.Equal(property.StartChar + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.Start.Character);
         Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Line);
         Assert.Equal(property.StartChar + property.Name.Length + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Character);
+        Assert.Null(propertySymbol.DocumentSymbol.Children);
     }
 
     [Fact]
@@ -226,5 +227,84 @@ public class SymbolFactoryTests
         var targetProperty = Assert.Single(targetPropGroup.Properties);
         Assert.Equal("TargetProperty", targetProperty.Name);
         /// Property deserialization fully tested in <see cref="CanParsePropertiesOnProjectNode"/>
+    }
+
+    [Fact]
+    public void CanMakeTargetSymbol()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testTarget = new Target()
+        {
+            Name = "TestTarget",
+            StartPosition = new Position(2, 6),
+            EndPosition = new Position(3, 13)
+        };
+        var fileSymbols = new Project()
+        {
+            Targets = [ testTarget ]
+        };
+
+        var symbolContainer = symbolFactory.SymbolsForFile(fileSymbols);
+
+        Assert.NotNull(symbolContainer);
+        var targetSymbol = Assert.Single(symbolContainer);
+        Assert.NotNull(targetSymbol.DocumentSymbol);
+        Assert.Null(targetSymbol.SymbolInformation);
+        Assert.Equal(testTarget.Name, targetSymbol.DocumentSymbol.Name);
+        Assert.Equal((SymbolKind)MsBuildSymbolKind.Target, targetSymbol.DocumentSymbol.Kind);
+        Assert.Equal(testTarget.StartPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.Range.Start.Line);
+        Assert.Equal(testTarget.StartPosition.Character + _symbolOffset, targetSymbol.DocumentSymbol.Range.Start.Character);
+        Assert.Equal(testTarget.EndPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.Range.End.Line);
+        Assert.Equal(testTarget.EndPosition.Character + _symbolOffset, targetSymbol.DocumentSymbol.Range.End.Character);
+        Assert.Equal(testTarget.StartPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.SelectionRange.Start.Line);
+        Assert.Equal(testTarget.StartPosition.Character + _symbolOffset, targetSymbol.DocumentSymbol.SelectionRange.Start.Character);
+        Assert.Equal(testTarget.StartPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.SelectionRange.End.Line);
+        Assert.Equal(testTarget.StartPosition.Character + _symbolOffset, targetSymbol.DocumentSymbol.SelectionRange.End.Character);
+        Assert.Null(targetSymbol.DocumentSymbol.Children);
+    }
+
+    [Fact]
+    public void CanMakePropertySymbolOnTarget()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testProperty = new Property()
+        {
+            Name = "TargetProperty",
+            StartLine = 4,
+            StartChar = 14,
+            EndLine = 4,
+            EndChar = 54
+        };
+        var testTarget = new Target()
+        {
+            Name = "TestTarget",
+            StartPosition = new Position(2, 6),
+            EndPosition = new Position(3, 13),
+            PropertyGroups = [
+                new PropertyGroup()
+                {
+                    Properties = [ testProperty ]
+                }
+            ]
+        };
+        var fileSymbols = new Project()
+        {
+            Targets = [ testTarget ]
+        };
+
+        var symbolContainer = symbolFactory.SymbolsForFile(fileSymbols);
+
+        Assert.NotNull(symbolContainer);
+        var symbol = Assert.Single(symbolContainer);
+        Assert.NotNull(symbol.DocumentSymbol);
+        Assert.Equal(testTarget.Name, symbol.DocumentSymbol.Name);
+        Assert.NotNull(symbol.DocumentSymbol.Children);
+        var targetPropertySymbol = Assert.Single(symbol.DocumentSymbol.Children);
+        Assert.NotNull(targetPropertySymbol);
+        Assert.Equal((SymbolKind)MsBuildSymbolKind.Property, targetPropertySymbol.Kind);
+        Assert.Equal(testProperty.Name, targetPropertySymbol.Name);
+        /// Property symbol creation tested in full at <see cref="CanMakePropertySymbol"/>
     }
 }
