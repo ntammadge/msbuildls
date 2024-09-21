@@ -179,4 +179,47 @@ public class SymbolFactoryTests
         var propGroup = Assert.Single(fileSymbols.PropertyGroups);
         Assert.Null(propGroup.Properties);
     }
+
+    [Fact]
+    public void CanDeserializeTarget()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("target.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.Targets);
+        var target = Assert.Single(fileSymbols.Targets);
+        Assert.Equal("TestTarget", target.Name);
+    }
+
+    [Fact]
+    public void CanDeserializePropertyOnTarget()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("target.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.Targets);
+        var target = Assert.Single(fileSymbols.Targets);
+        Assert.NotNull(target.PropertyGroups);
+        var targetPropGroup = Assert.Single(target.PropertyGroups);
+        Assert.NotNull(targetPropGroup.Properties);
+        var targetProperty = Assert.Single(targetPropGroup.Properties);
+        Assert.Equal("TargetProperty", targetProperty.Name);
+        /// Property deserialization fully tested in <see cref="CanParsePropertiesOnProjectNode"/>
+    }
 }
