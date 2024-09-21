@@ -1,7 +1,4 @@
 <Project>
     <Target Name="TestTarget">
-        <PropertyGroup>
-            <TargetProperty>testvalue</TargetProperty>
-        </PropertyGroup>
     </Target>
 </Project>

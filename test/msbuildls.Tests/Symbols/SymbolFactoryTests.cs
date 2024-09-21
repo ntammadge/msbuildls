@@ -197,13 +197,18 @@ public class SymbolFactoryTests
         Assert.NotNull(fileSymbols.Targets);
         var target = Assert.Single(fileSymbols.Targets);
         Assert.Equal("TestTarget", target.Name);
+        Assert.Equal(2, target.StartPosition.Line);
+        Assert.Equal(6, target.StartPosition.Character);
+        Assert.Equal(3, target.EndPosition.Line);
+        Assert.Equal(13, target.EndPosition.Character);
+        Assert.Null(target.PropertyGroups);
     }
 
     [Fact]
     public void CanDeserializePropertyOnTarget()
     {
         var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
-        var testFilePath = GetFullyQualifiedTestDataFilePath("target.targets");
+        var testFilePath = GetFullyQualifiedTestDataFilePath("targetWithProperty.targets");
 
         var textDocumentItem = new TextDocumentItem()
         {
