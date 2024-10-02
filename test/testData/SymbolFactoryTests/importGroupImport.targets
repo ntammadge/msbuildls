@@ -1,0 +1,5 @@
+<Project>
+    <ImportGroup>
+        <Import Project="Imported.targets" />
+    </ImportGroup>
+</Project>
