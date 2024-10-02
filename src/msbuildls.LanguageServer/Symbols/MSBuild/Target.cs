@@ -39,6 +39,10 @@ public class Target : IXmlSerializable
                 propGroup.ReadXml(reader);
                 propGroups.Add(propGroup);
             }
+            else // All unhandled nodes get skipped
+            {
+                reader.Read();
+            }
         }
 
         if (propGroups.Any())
