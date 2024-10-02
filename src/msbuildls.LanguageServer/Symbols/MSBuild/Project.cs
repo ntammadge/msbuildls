@@ -12,4 +12,10 @@ public class Project
 
     [XmlElement(nameof(Target))]
     public Target[]? Targets { get; set; }
+
+    [XmlElement(nameof(Import))]
+    public Import[]? Imports { get; set; }
+
+    [XmlElement(nameof(ImportGroup))]
+    public ImportGroup[]? ImportGroups { get; set; }
 }

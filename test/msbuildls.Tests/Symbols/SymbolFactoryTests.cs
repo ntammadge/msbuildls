@@ -307,4 +307,81 @@ public class SymbolFactoryTests
         Assert.Equal(testProperty.Name, targetPropertySymbol.Name);
         /// Property symbol creation tested in full at <see cref="CanMakePropertySymbol"/>
     }
+
+    [Fact]
+    public void CanDeserializeProjectImport()
+    {
+        var expectedImport = new Import()
+        {
+            Project = "Imported.targets"
+        };
+
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testFilePath = GetFullyQualifiedTestDataFilePath("import.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.Imports);
+        var deserializedImport = Assert.Single(fileSymbols.Imports);
+        Assert.NotNull(deserializedImport);
+        Assert.Equal(expectedImport.Project, deserializedImport.Project);
+    }
+
+    [Fact]
+    public void CanDeserializeImportGroup()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testFilePath = GetFullyQualifiedTestDataFilePath("importGroup.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.ImportGroups);
+        var deserializedImportGroup = Assert.Single(fileSymbols.ImportGroups);
+        Assert.NotNull(deserializedImportGroup);
+    }
+
+    [Fact]
+    public void CanDeserializeImportGroupImport()
+    {
+        var import = new Import()
+        {
+            Project = "Imported.targets"
+        };
+
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testFilePath = GetFullyQualifiedTestDataFilePath("importGroupImport.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.ImportGroups);
+        var deserializedImportGroup = Assert.Single(fileSymbols.ImportGroups);
+        Assert.NotNull(deserializedImportGroup);
+        Assert.NotNull(deserializedImportGroup.Imports);
+        var deserializedImport = Assert.Single(deserializedImportGroup.Imports);
+        Assert.Equal(import.Project, deserializedImport.Project);
+    }
 }
