@@ -9,4 +9,7 @@ public class Project
 {
     [XmlElement(nameof(PropertyGroup))]
     public PropertyGroup[]? PropertyGroups { get; set; }
+
+    [XmlElement(nameof(Target))]
+    public Target[]? Targets { get; set; }
 }

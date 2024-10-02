@@ -65,10 +65,60 @@ internal class TextDocumentSymbolsHandler : DocumentSymbolHandlerBase
         {
             return null;
         }
-        // This works for now with project-scoped properties. Will need updates for targets.
-        // Property "original definition" is the first use of the property.
-        // Target "definition" for execution is the last definition of the target
-        var hashedSymbols = rawSymbols.DistinctBy(symbol => symbol.DocumentSymbol?.Name);
-        return SymbolInformationOrDocumentSymbolContainer.From(hashedSymbols);
+
+        var knownSymbols = rawSymbols
+            .Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MsBuildSymbolKind.Property)
+            .GroupBy(symbol => new SymbolKey(symbol.DocumentSymbol!.Name, symbol.DocumentSymbol.Kind))
+            .ToDictionary(group => group.Key, group => group.OrderBy(symbol => symbol.DocumentSymbol!.Range.Start).First());
+
+        // Flatten targets and nested symbols
+        foreach (var target in rawSymbols.Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MsBuildSymbolKind.Target))
+        {
+            var targetKey = new SymbolKey(target.DocumentSymbol!.Name, target.DocumentSymbol.Kind);
+            // Don't bother with redefinitions of targets for now.
+            // Technically the last definition of a target after evaluation is the one that gets executed if the target is called, which complicates the decision making about which nested symbols are populated.
+            if (knownSymbols.ContainsKey(targetKey))
+            {
+                continue;
+            }
+
+            // Don't need to add nested symbols if they don't exist
+            if (target.DocumentSymbol.Children is null)
+            {
+                knownSymbols.Add(targetKey, target);
+                continue;
+            }
+
+            // Have to remake the symbol because the properties are init-only sets and we need to flatten the symbol hierarchy (no child symbols)
+            var newTarget = new DocumentSymbol()
+            {
+                Name = target.DocumentSymbol.Name,
+                Kind = target.DocumentSymbol.Kind,
+                Range = target.DocumentSymbol.Range,
+                SelectionRange = target.DocumentSymbol.SelectionRange
+            };
+            knownSymbols.Add(targetKey, newTarget);
+
+            var nestedSymbols = target.DocumentSymbol.Children
+                .Where(nestedSymbol => nestedSymbol.Kind == (SymbolKind)MsBuildSymbolKind.Property)
+                .GroupBy(nestedSymbol => new SymbolKey(nestedSymbol.Name, nestedSymbol.Kind));
+
+            // Add the nested symbol to the known symbols collection if it's unknown
+            foreach (var symbolGroup in nestedSymbols)
+            {
+                if (knownSymbols.ContainsKey(symbolGroup.Key))
+                {
+                    continue;
+                }
+
+                var nestedSymbol = symbolGroup.OrderBy(symbol => symbol.Range.Start).First();
+
+                knownSymbols.Add(symbolGroup.Key, nestedSymbol);
+            }
+        }
+
+        return SymbolInformationOrDocumentSymbolContainer.From(knownSymbols.Values);
     }
+
+    private record SymbolKey(string Name, SymbolKind Kind);
 }
