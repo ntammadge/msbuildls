@@ -59,7 +59,6 @@ internal class TextDocumentSymbolsHandler : DocumentSymbolHandlerBase
         };
     }
 
-    // This is going to have to change again when the go to definition feature is implemented...
     private SymbolInformationOrDocumentSymbolContainer? FilterDuplicateSymbols(SymbolInformationOrDocumentSymbolContainer? rawSymbols)
     {
         if (rawSymbols is null)
