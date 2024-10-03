@@ -9,14 +9,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
 
-internal static class KnownMsBuildNodes
-{
-    public const string PropertyGroup = "PropertyGroup";
-    public const string ItemGroup = "ItemGroup";
-    public const string Project = "Project";
-    public const string Target = "Target";
-}
-
 /// <summary>
 /// Provides a mapping from MsBuild elements to symbol types
 /// </summary>
