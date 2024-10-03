@@ -11,4 +11,10 @@ public static class LanguageServerOptionsExtensions
             .WithHandler<TextDocumentHandler>()
             .WithHandler<TextDocumentSymbolsHandler>();
     }
+
+    public static LanguageServerOptions AddCommandHandlers(this LanguageServerOptions options)
+    {
+        return options
+            .WithHandler<GoToDefinitionHandler>();
+    }
 }
