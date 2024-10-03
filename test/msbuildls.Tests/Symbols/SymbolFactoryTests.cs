@@ -252,7 +252,7 @@ public class SymbolFactoryTests
         Assert.NotNull(targetSymbol.DocumentSymbol);
         Assert.Null(targetSymbol.SymbolInformation);
         Assert.Equal(testTarget.Name, targetSymbol.DocumentSymbol.Name);
-        Assert.Equal((SymbolKind)MsBuildSymbolKind.Target, targetSymbol.DocumentSymbol.Kind);
+        Assert.Equal((SymbolKind)MSBuildSymbolKind.Target, targetSymbol.DocumentSymbol.Kind);
         Assert.Equal(testTarget.StartPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.Range.Start.Line);
         Assert.Equal(testTarget.StartPosition.Character + _symbolOffset, targetSymbol.DocumentSymbol.Range.Start.Character);
         Assert.Equal(testTarget.EndPosition.Line + _symbolOffset, targetSymbol.DocumentSymbol.Range.End.Line);
@@ -303,7 +303,7 @@ public class SymbolFactoryTests
         Assert.NotNull(symbol.DocumentSymbol.Children);
         var targetPropertySymbol = Assert.Single(symbol.DocumentSymbol.Children);
         Assert.NotNull(targetPropertySymbol);
-        Assert.Equal((SymbolKind)MsBuildSymbolKind.Property, targetPropertySymbol.Kind);
+        Assert.Equal((SymbolKind)MSBuildSymbolKind.Property, targetPropertySymbol.Kind);
         Assert.Equal(testProperty.Name, targetPropertySymbol.Name);
         /// Property symbol creation tested in full at <see cref="CanMakePropertySymbol"/>
     }

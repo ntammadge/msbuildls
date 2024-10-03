@@ -10,9 +10,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 namespace msbuildls.LanguageServer.Symbols;
 
 /// <summary>
-/// Provides a mapping from MsBuild elements to symbol types
+/// Provides a mapping from MSBuild elements to symbol types
 /// </summary>
-internal enum MsBuildSymbolKind
+internal enum MSBuildSymbolKind
 {
     Property = SymbolKind.Property,
     Target = SymbolKind.Function
@@ -79,7 +79,7 @@ internal class SymbolFactory : ISymbolFactory
                     return new DocumentSymbol()
                     {
                         Name = property.Name,
-                        Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                        Kind = (SymbolKind)MSBuildSymbolKind.Property,
                         Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
                         SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos.Line, startPos.Character, startPos.Line, startPos.Character + property.Name.Length)
                     };
@@ -102,7 +102,7 @@ internal class SymbolFactory : ISymbolFactory
                 return new DocumentSymbol()
                 {
                     Name = target.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, startPos), // Set selection range to the start of the element because the name attribute may not be the first attribute
                     Children = nestedSymbols.Any() ? nestedSymbols : null

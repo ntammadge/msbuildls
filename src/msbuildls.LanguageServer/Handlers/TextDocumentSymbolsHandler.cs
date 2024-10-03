@@ -67,12 +67,12 @@ internal class TextDocumentSymbolsHandler : DocumentSymbolHandlerBase
         }
 
         var knownSymbols = rawSymbols
-            .Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MsBuildSymbolKind.Property)
+            .Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MSBuildSymbolKind.Property)
             .GroupBy(symbol => new SymbolKey(symbol.DocumentSymbol!.Name, symbol.DocumentSymbol.Kind))
             .ToDictionary(group => group.Key, group => group.OrderBy(symbol => symbol.DocumentSymbol!.Range.Start).First());
 
         // Flatten targets and nested symbols
-        foreach (var target in rawSymbols.Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MsBuildSymbolKind.Target))
+        foreach (var target in rawSymbols.Where(symbol => symbol.DocumentSymbol!.Kind == (SymbolKind)MSBuildSymbolKind.Target))
         {
             var targetKey = new SymbolKey(target.DocumentSymbol!.Name, target.DocumentSymbol.Kind);
             // Don't bother with redefinitions of targets for now.
@@ -100,7 +100,7 @@ internal class TextDocumentSymbolsHandler : DocumentSymbolHandlerBase
             knownSymbols.Add(targetKey, newTarget);
 
             var nestedSymbols = target.DocumentSymbol.Children
-                .Where(nestedSymbol => nestedSymbol.Kind == (SymbolKind)MsBuildSymbolKind.Property)
+                .Where(nestedSymbol => nestedSymbol.Kind == (SymbolKind)MSBuildSymbolKind.Property)
                 .GroupBy(nestedSymbol => new SymbolKey(nestedSymbol.Name, nestedSymbol.Kind));
 
             // Add the nested symbol to the known symbols collection if it's unknown

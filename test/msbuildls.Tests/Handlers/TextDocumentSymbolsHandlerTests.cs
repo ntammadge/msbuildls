@@ -61,7 +61,7 @@ public class TextDocumentSymbolsHandlerTests
                     SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                     {
                         Name = property.Name,
-                        Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                        Kind = (SymbolKind)MSBuildSymbolKind.Property,
                         Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.StartLine, property.StartChar, property.EndLine, property.EndChar),
                         SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.StartLine, property.StartChar, property.StartLine, property.StartChar + property.Name.Length)
                     })
@@ -172,14 +172,14 @@ public class TextDocumentSymbolsHandlerTests
                     SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                     {
                         Name = property1.Name,
-                        Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                        Kind = (SymbolKind)MSBuildSymbolKind.Property,
                         Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.StartLine, property1.StartChar, property1.EndLine, property1.EndChar),
                         SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.StartLine, property1.StartChar, property1.StartLine, property1.StartChar + property1.Name.Length)
                     }),
                     SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                     {
                         Name = property2.Name,
-                        Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                        Kind = (SymbolKind)MSBuildSymbolKind.Property,
                         Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.StartLine, property2.StartChar, property2.EndLine, property2.EndChar),
                         SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.StartLine, property2.StartChar, property2.StartLine, property2.StartChar + property2.Name.Length)
                     })
@@ -267,14 +267,14 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = projectProperty.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Property,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.EndLine, projectProperty.EndChar),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.StartLine, projectProperty.StartChar + projectProperty.Name.Length)
                 }),
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.StartPosition),
                     Children = new[]
@@ -282,7 +282,7 @@ public class TextDocumentSymbolsHandlerTests
                         new DocumentSymbol()
                         {
                             Name = targetProperty.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
                         }
@@ -366,14 +366,14 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = projectProperty.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Property,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.EndLine, projectProperty.EndChar),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.StartLine, projectProperty.StartChar + projectProperty.Name.Length)
                 }),
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.StartPosition),
                     Children = new[]
@@ -381,7 +381,7 @@ public class TextDocumentSymbolsHandlerTests
                         new DocumentSymbol()
                         {
                             Name = targetProperty.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
                         }
@@ -456,7 +456,7 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.StartPosition),
                     Children = new[]
@@ -464,14 +464,14 @@ public class TextDocumentSymbolsHandlerTests
                         new DocumentSymbol()
                         {
                             Name = targetProperty.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
                         },
                         new DocumentSymbol()
                         {
                             Name = targetProperty2.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.EndLine, targetProperty2.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.StartLine, targetProperty2.StartChar + targetProperty2.Name.Length)
                         }
@@ -561,7 +561,7 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target1.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target1.StartPosition, target1.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target1.StartPosition, target1.StartPosition),
                     Children = new[]
@@ -569,7 +569,7 @@ public class TextDocumentSymbolsHandlerTests
                         new DocumentSymbol()
                         {
                             Name = targetProperty1.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.StartLine, targetProperty1.StartChar, targetProperty1.EndLine, targetProperty1.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.StartLine, targetProperty1.StartChar, targetProperty1.StartLine, targetProperty1.StartChar + targetProperty1.Name.Length)
                         }
@@ -578,7 +578,7 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target2.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target2.StartPosition, target2.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target2.StartPosition, target2.StartPosition),
                     Children = new[]
@@ -586,7 +586,7 @@ public class TextDocumentSymbolsHandlerTests
                         new DocumentSymbol()
                         {
                             Name = targetProperty2.Name,
-                            Kind = (SymbolKind)MsBuildSymbolKind.Property,
+                            Kind = (SymbolKind)MSBuildSymbolKind.Property,
                             Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.EndLine, targetProperty2.EndChar),
                             SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.StartLine, targetProperty2.StartChar + targetProperty2.Name.Length)
                         }
@@ -646,14 +646,14 @@ public class TextDocumentSymbolsHandlerTests
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = target.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.StartPosition, target.StartPosition)
                 }),
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
                     Name = redefinedTarget.Name,
-                    Kind = (SymbolKind)MsBuildSymbolKind.Target,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Target,
                     Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(redefinedTarget.StartPosition, redefinedTarget.EndPosition),
                     SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(redefinedTarget.StartPosition, redefinedTarget.StartPosition)
                 }),
