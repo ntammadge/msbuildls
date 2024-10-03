@@ -74,7 +74,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
         {
             DocumentSelector = _textDocumentSelector,
             Change = TextDocumentSyncKind.Incremental,
-            Save = new OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities.SaveOptions()
+            Save = new SaveOptions()
             {
                 IncludeText = false,
             }
