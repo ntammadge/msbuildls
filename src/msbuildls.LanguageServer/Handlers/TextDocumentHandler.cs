@@ -41,12 +41,13 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Opened file: {filePath}", request.TextDocument.Uri.Path);
+        var filePath = request.TextDocument.Uri.ToUri().LocalPath;
+        _logger.LogInformation("Opened file: {filePath}", filePath);
 
         var docSymbols = _symbolFactory.ParseDocument(request.TextDocument);
         if (docSymbols != null)
         {
-            _symbolProvider.AddOrUpdateSymbols(request.TextDocument.Uri.Path, docSymbols);
+            _symbolProvider.AddOrUpdateSymbols(filePath, docSymbols);
         }
 
         return Unit.Task;
@@ -64,7 +65,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Closed file: {filePath}", request.TextDocument.Uri.Path);
+        _logger.LogInformation("Closed file: {filePath}", request.TextDocument.Uri.ToUri().LocalPath);
         return Unit.Task;
     }
 

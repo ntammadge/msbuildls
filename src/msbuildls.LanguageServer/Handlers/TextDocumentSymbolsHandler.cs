@@ -27,9 +27,10 @@ internal class TextDocumentSymbolsHandler : DocumentSymbolHandlerBase
     }
     public override Task<SymbolInformationOrDocumentSymbolContainer?> Handle(DocumentSymbolParams request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Handling request for symbols from {documentPath}", request.TextDocument.Uri.Path);
+        var filePath = request.TextDocument.Uri.ToUri().LocalPath;
+        _logger.LogInformation("Handling request for symbols from {documentPath}", filePath);
 
-        var projectSymbols = _symbolProvider.GetFileSymbols(request.TextDocument.Uri.Path);
+        var projectSymbols = _symbolProvider.GetFileSymbols(filePath);
         SymbolInformationOrDocumentSymbolContainer? symbols = null;
 
         if (projectSymbols != null)

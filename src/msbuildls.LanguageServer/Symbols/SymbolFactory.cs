@@ -73,15 +73,12 @@ internal class SymbolFactory : ISymbolFactory
             ?.SelectMany(propGroup => propGroup.Properties
                 ?.Select(property =>
                 {
-                    var startPos = new Position(property.StartLine + _symbolOffset, property.StartChar + _symbolOffset);
-                    var endPos = new Position(property.EndLine + _symbolOffset, property.EndChar + _symbolOffset);
-
                     return new DocumentSymbol()
                     {
                         Name = property.Name,
                         Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos.Line, startPos.Character, startPos.Line, startPos.Character + property.Name.Length)
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.End.Line, property.Range.End.Character),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.Start.Line, property.Range.Start.Character + property.Name.Length)
                     };
                 }) ?? []) ?? [];
     }
