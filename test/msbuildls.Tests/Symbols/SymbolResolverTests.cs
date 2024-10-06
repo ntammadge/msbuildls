@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using msbuildls.LanguageServer.Symbols;
 using msbuildls.LanguageServer.Symbols.MSBuild;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
@@ -159,5 +160,91 @@ public class SymbolResolverTests
         Assert.Equal(propertyDefinition.Range.Start.Character, symbolDefinitionLocation.Range.Start.Character);
         Assert.Equal(propertyDefinition.Range.End.Line, symbolDefinitionLocation.Range.End.Line);
         Assert.Equal(propertyDefinition.Range.End.Character, symbolDefinitionLocation.Range.End.Character);
+    }
+
+    [Fact]
+    public void CanResolveTargetPropertySymbolAtLocation()
+    {
+        var targetProperty = new Property()
+        {
+            Name = "TargetProperty",
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(4, 11, 4, 50)
+        };
+        var fileSymbols = new Project()
+        {
+            Targets = [
+                new Target()
+                {
+                    PropertyGroups = [
+                        new PropertyGroup()
+                        {
+                            Properties = [ targetProperty ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var mockSymbolProvider = new Mock<ISymbolProvider>();
+        mockSymbolProvider
+            .Setup(provider => provider.GetFileSymbols(It.IsAny<string>()))
+            .Returns(fileSymbols);
+
+        var symbolResolver = new SymbolResolver(NullLogger<ISymbolResolver>.Instance, mockSymbolProvider.Object);
+
+        var identifiedSymbol = symbolResolver.ResolveSymbolAtLocation(@"C:\SomeFile.targets", new Position(4, 15)); // Position must be in range of the target property
+
+        Assert.NotNull(identifiedSymbol);
+        Assert.Equal(targetProperty, identifiedSymbol);
+    }
+
+    [Fact]
+    public void CanResolveTargetPropertyDefinitionToTargetProperty()
+    {
+        var identifiedSymbol = new Property()
+        {
+            Name = "IdentifiedProperty",
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(12, 12, 12, 50)
+        };
+        var symbolDefinition = new Property()
+        {
+            Name = identifiedSymbol.Name,
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(7, 12, 7, 50)
+        };
+
+        var mockSymbolProvider = new Mock<ISymbolProvider>();
+        mockSymbolProvider
+            .Setup(provider => provider.GetFileSymbols(It.IsAny<string>()))
+            .Returns(new Project()
+            {
+                Targets = [
+                    new Target()
+                    {
+                        PropertyGroups = [
+                            new PropertyGroup()
+                            {
+                                Properties = [ symbolDefinition ]
+                            }
+                        ]
+                    },
+                    new Target()
+                    {
+                        PropertyGroups = [
+                            new PropertyGroup()
+                            {
+                                Properties = [ identifiedSymbol ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        var symbolResolver = new SymbolResolver(NullLogger<ISymbolResolver>.Instance, mockSymbolProvider.Object);
+        var expectedUri = DocumentUri.File(@"C:\TargetScope.targets");
+
+        var symbolDefinitionLocation = symbolResolver.ResolveDefinitionForSymbol(identifiedSymbol, expectedUri.ToUri().LocalPath);
+        Assert.NotNull(symbolDefinitionLocation);
+        Assert.Equal(expectedUri.ToUri().LocalPath, symbolDefinitionLocation.Uri.ToUri().LocalPath);
+        Assert.Equal(symbolDefinition.Range, symbolDefinitionLocation.Range);
     }
 }

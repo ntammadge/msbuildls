@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using msbuildls.LanguageServer.Extensions;
-using msbuildls.LanguageServer.Symbols.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
@@ -21,7 +21,6 @@ internal class SymbolResolver : ISymbolResolver
     public Location? ResolveDefinitionForSymbol(IdentifiableElement deserializedSymbol, string fileScope)
     {
         _logger.LogInformation("Resolving the definition for symbol");
-        var prop = deserializedSymbol as Property;
 
         var fileSymbols = _symbolProvider.GetFileSymbols(fileScope);
         if (fileSymbols == null)
@@ -30,7 +29,12 @@ internal class SymbolResolver : ISymbolResolver
             return null;
         }
 
-        var propertyReferences = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == prop.Name) ?? []);
+        // Prioritize project-level references over target-level references
+        var propertyReferences = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == deserializedSymbol.Name) ?? []) ?? [];
+        if (!propertyReferences.Any())
+        {
+            propertyReferences = fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == deserializedSymbol.Name) ?? []) ?? []);
+        }
         var propDefinition = propertyReferences?.OrderBy(property => property.Range.Start.Line).First();
 
         return new Location()
@@ -56,9 +60,19 @@ internal class SymbolResolver : ISymbolResolver
             return null;
         }
 
-        var properties = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup?.Properties ?? []);
-        var resolvedProperty = properties?.FirstOrDefault(property => position.IsIn(property.Range));
-        _logger.LogInformation("Resolved symbol at cursor");
-        return resolvedProperty;
+        var resolvableSymbols = new List<IdentifiableElement>();
+        resolvableSymbols.AddRange(fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup?.Properties ?? []) ?? []);
+        resolvableSymbols.AddRange(fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties ?? []) ?? []) ?? []);
+
+        var resolvedSymbol = resolvableSymbols.FirstOrDefault(element => position.IsIn(element.Range));
+        if (resolvedSymbol == null)
+        {
+            _logger.LogInformation("No identifiable elements at the current position");
+        }
+        else
+        {
+            _logger.LogInformation("Resolved symbol at cursor");
+        }
+        return resolvedSymbol;
     }
 }
