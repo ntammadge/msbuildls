@@ -30,7 +30,7 @@ internal class SymbolFactory : ISymbolFactory
 
     public Project? ParseDocument(TextDocumentItem textDocumentItem)
     {
-        var documentPath = textDocumentItem.Uri.Path;
+        var documentPath = textDocumentItem.Uri.ToUri().LocalPath;
         _logger.LogInformation("Beginning deserialization of {documentPath}", documentPath);
 
         var serializer = new XmlSerializer(typeof(Project));
