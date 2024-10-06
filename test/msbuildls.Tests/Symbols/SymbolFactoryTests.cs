@@ -107,6 +107,21 @@ public class SymbolFactoryTests
     }
 
     [Fact]
+    public void CanParseFileFromPath()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("property.props");
+
+        var fileSymbols = symbolFactory.ParseFile(testFilePath);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.PropertyGroups);
+        var propGroup = Assert.Single(fileSymbols.PropertyGroups);
+        Assert.NotNull(propGroup.Properties);
+        var property = Assert.Single(propGroup.Properties);
+        Assert.Equal("TestProperty", property.Name);
+    }
+
+    [Fact]
     public void CanParseEmptyFile()
     {
         var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
