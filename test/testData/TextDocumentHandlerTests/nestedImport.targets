@@ -1,0 +1,9 @@
+<!--
+    This file is not read directly during testing. It exists to support a File.Exists check in import processing
+    and to demonstrate what the file contents could look like a real scenario
+-->
+<Project>
+    <PropertyGroup>
+        <TestProperty>testvalue</TestProperty>
+    </PropertyGroup>
+</Project>
