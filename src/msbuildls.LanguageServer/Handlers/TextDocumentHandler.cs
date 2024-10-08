@@ -69,7 +69,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
         if (imports.Count == 0)
         {
-            _logger.LogInformation("Not imports found in file {filePath}", importingFile);
+            _logger.LogInformation("No imports found in file {filePath}", importingFile);
             return;
         }
 
