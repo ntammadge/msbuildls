@@ -1,0 +1,4 @@
+<Project>
+    <Import Project="Conditional.targets"
+            Condition="true"/>
+</Project>

@@ -26,7 +26,7 @@ public class GoToDefinitionHandlerTests
                 Assert.Equal(expectedFilePath, filePath);
                 Assert.Equal(expectedPosition, position);
             })
-            .Returns(null as IdentifiableElement);
+            .Returns(null as IElementWithRange);
 
         var handler = new GoToDefinitionHandler(NullLogger<GoToDefinitionHandler>.Instance, mockSymbolResolver.Object);
 
@@ -69,8 +69,8 @@ public class GoToDefinitionHandlerTests
             })
             .Returns(expectedSymbol);
         mockSymbolResolver
-            .Setup(resolver => resolver.ResolveDefinitionForSymbol(It.IsAny<IdentifiableElement>(), It.IsAny<string>()))
-            .Callback<IdentifiableElement, string>((symbol, filePath) =>
+            .Setup(resolver => resolver.ResolveDefinitionForSymbol(It.IsAny<IElementWithRange>(), It.IsAny<string>()))
+            .Callback<IElementWithRange, string>((symbol, filePath) =>
             {
                 Assert.Equal(expectedSymbol, symbol);
                 Assert.Equal(expectedFilePath, filePath);
@@ -95,7 +95,7 @@ public class GoToDefinitionHandlerTests
                 Times.Once);
         mockSymbolResolver
             .Verify(
-                resolver => resolver.ResolveDefinitionForSymbol(It.IsAny<IdentifiableElement>(), It.IsAny<string>()),
+                resolver => resolver.ResolveDefinitionForSymbol(It.IsAny<IElementWithRange>(), It.IsAny<string>()),
                 Times.Once);
         Assert.NotNull(result);
         var resultLocation = Assert.Single(result);

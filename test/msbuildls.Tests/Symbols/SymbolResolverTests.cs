@@ -46,7 +46,8 @@ public class SymbolResolverTests
         var resolvedSymbol = symbolResolver.ResolveSymbolAtLocation(@"C:\SomeFile.targets", position);
 
         Assert.NotNull(resolvedSymbol);
-        Assert.Equal(propertyName, resolvedSymbol.Name);
+        Assert.IsType<Property>(resolvedSymbol);
+        Assert.Equal(propertyName, (resolvedSymbol as Property).Name);
     }
 
     [Fact]

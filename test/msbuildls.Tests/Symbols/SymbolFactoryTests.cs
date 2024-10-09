@@ -387,4 +387,33 @@ public class SymbolFactoryTests
         var deserializedImport = Assert.Single(deserializedImportGroup.Imports);
         Assert.Equal(import.Project, deserializedImport.Project);
     }
+
+    [Fact]
+    public void CanDeserializeImportWithAttributesOnMultipleLines()
+    {
+        var import = new Import()
+        {
+            Project = "Conditional.targets",
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(1, 5, 2, 28)
+        };
+
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testFilePath = GetFullyQualifiedTestDataFilePath("conditionalImport.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.Imports);
+        var parsedImport = Assert.Single(fileSymbols.Imports);
+        Assert.NotNull(parsedImport);
+        Assert.Equal(import.Project, parsedImport.Project);
+        Assert.Equal(import.Range, parsedImport.Range);
+    }
 }

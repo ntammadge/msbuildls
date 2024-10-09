@@ -5,9 +5,11 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols.MSBuild;
 
-public class Property : IdentifiableElement, IXmlSerializable
+public class Property : IElementWithRange, IXmlSerializable
 {
+    public string Name { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
+    public Range Range { get; set; } = new Range(0, 0, 0, 0);
 
     public XmlSchema? GetSchema()
     {
@@ -33,7 +35,11 @@ public class Property : IdentifiableElement, IXmlSerializable
         var endLine = endLineInfo.LineNumber;
         var endCharacter = endLineInfo.LinePosition;
 
-        Range = new Range(startLine + ClientOffset, startCharacter + ClientOffset, endLine + ClientOffset, endCharacter + Name.Length + ClientOffset);
+        Range = new Range(
+            startLine + IElementWithRange.ClientOffset,
+            startCharacter + IElementWithRange.ClientOffset,
+            endLine + IElementWithRange.ClientOffset,
+            endCharacter + Name.Length + IElementWithRange.ClientOffset);
 
         reader.ReadEndElement();
     }

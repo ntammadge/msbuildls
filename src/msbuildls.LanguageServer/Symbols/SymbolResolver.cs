@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using msbuildls.LanguageServer.Extensions;
+using msbuildls.LanguageServer.Symbols.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
@@ -18,10 +19,8 @@ internal class SymbolResolver : ISymbolResolver
         _symbolProvider = symbolProvider;
     }
 
-    public Location? ResolveDefinitionForSymbol(IdentifiableElement deserializedSymbol, string fileScope)
+    public Location? ResolveDefinitionForSymbol(IElementWithRange deserializedSymbol, string fileScope)
     {
-        _logger.LogInformation("Resolving the definition for symbol");
-
         var fileSymbols = _symbolProvider.GetFileSymbols(fileScope);
         if (fileSymbols == null)
         {
@@ -29,11 +28,16 @@ internal class SymbolResolver : ISymbolResolver
             return null;
         }
 
+        // Imports and properties are evaluated in order by appearance in the file
+        // If a property appears before an import which contains an assignment to the same property, the position before the import is the definition.
+        // If a property appears after an import which contains an assignment to the same property, the position in the imported file is the definition
+        // TODO: Add range data to imports in order to order their appearances with properties accordingly
+
         // Prioritize project-level references over target-level references
-        var propertyReferences = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == deserializedSymbol.Name) ?? []) ?? [];
+        var propertyReferences = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == (deserializedSymbol as Property).Name) ?? []) ?? [];
         if (!propertyReferences.Any())
         {
-            propertyReferences = fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == deserializedSymbol.Name) ?? []) ?? []);
+            propertyReferences = fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == (deserializedSymbol as Property).Name) ?? []) ?? []);
         }
         var propDefinition = propertyReferences?.OrderBy(property => property.Range.Start.Line).First();
 
@@ -48,7 +52,7 @@ internal class SymbolResolver : ISymbolResolver
         };
     }
 
-    public IdentifiableElement? ResolveSymbolAtLocation(string filePath, Position position)
+    public IElementWithRange? ResolveSymbolAtLocation(string filePath, Position position)
     {
         _logger.LogInformation("Beginning resolution of symbol at location");
 
@@ -60,7 +64,7 @@ internal class SymbolResolver : ISymbolResolver
             return null;
         }
 
-        var resolvableSymbols = new List<IdentifiableElement>();
+        var resolvableSymbols = new List<IElementWithRange>();
         resolvableSymbols.AddRange(fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup?.Properties ?? []) ?? []);
         resolvableSymbols.AddRange(fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties ?? []) ?? []) ?? []);
 
