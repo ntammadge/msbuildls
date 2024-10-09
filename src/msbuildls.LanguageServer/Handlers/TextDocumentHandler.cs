@@ -66,14 +66,6 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
         var imports = new List<Import>();
         imports.AddRange(fileSymbols.Imports ?? []);
         imports.AddRange(fileSymbols.ImportGroups?.SelectMany(importGroup => importGroup.Imports ?? []) ?? []);
-
-        if (imports.Count == 0)
-        {
-            _logger.LogInformation("No imports found in file {filePath}", importingFile);
-            return;
-        }
-
-        _logger.BeginScope("Imports found in {filePath}", importingFile);
         var importingFileDirectory = new FileInfo(importingFile).Directory.FullName; // TODO: figure out when this could be null
 
         foreach (var import in imports) // TODO: Order by appearance in the file
