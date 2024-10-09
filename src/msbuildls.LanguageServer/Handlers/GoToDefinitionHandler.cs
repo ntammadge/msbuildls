@@ -30,20 +30,10 @@ public class GoToDefinitionHandler : DefinitionHandlerBase
             return Task.FromResult<LocationOrLocationLinks?>(null);
         }
 
-        var symbolDefinition = _symbolResolver.ResolveDefinitionForSymbol(symbolAtLocation, filePath);
+        // A location should always be found, even if it is the location that the handler was triggered from
+        var symbolDefinition = _symbolResolver.ResolveDefinitionForSymbol(symbolAtLocation, filePath)!;
 
-        var locationLink = LocationOrLocationLinks.From(new []
-        {
-            new LocationOrLocationLink(new Location()
-            {
-                Uri = request.TextDocument.Uri,
-                Range = new Range(
-                    symbolDefinition.Range.Start.Line,
-                    symbolDefinition.Range.Start.Character,
-                    symbolDefinition.Range.End.Line,
-                    symbolDefinition.Range.End.Character)
-            })
-        });
+        var locationLink = LocationOrLocationLinks.From(new[] { new LocationOrLocationLink(symbolDefinition) });
         return Task.FromResult<LocationOrLocationLinks?>(locationLink);
     }
 

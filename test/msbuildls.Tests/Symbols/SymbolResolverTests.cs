@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using msbuildls.LanguageServer.Symbols;
@@ -47,7 +48,7 @@ public class SymbolResolverTests
 
         Assert.NotNull(resolvedSymbol);
         Assert.IsType<Property>(resolvedSymbol);
-        Assert.Equal(propertyName, (resolvedSymbol as Property).Name);
+        Assert.Equal(propertyName, (resolvedSymbol as Property)!.Name);
     }
 
     [Fact]
@@ -247,5 +248,63 @@ public class SymbolResolverTests
         Assert.NotNull(symbolDefinitionLocation);
         Assert.Equal(expectedUri.ToUri().LocalPath, symbolDefinitionLocation.Uri.ToUri().LocalPath);
         Assert.Equal(symbolDefinition.Range, symbolDefinitionLocation.Range);
+    }
+
+    [Fact]
+    public void CanResolvePropertyDefinitionFromImport()
+    {
+        var initialFilePath = @"C:\initial.targets";
+        var importedFilePath = @"C:\imported.targets";
+        var identifiedProperty = new Property()
+        {
+            Name = "TestProperty",
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(5, 10, 5, 50)
+        };
+        var importedProperty = new Property()
+        {
+            Name = identifiedProperty.Name,
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(2, 10, 2, 40)
+        };
+
+        var mockSymbolProvider = new Mock<ISymbolProvider>();
+        mockSymbolProvider
+            .Setup(provider => provider.GetFileSymbols(It.Is<string>((file) => file == initialFilePath)))
+            .Returns(new Project()
+            {
+                Imports = [
+                    new Import()
+                    {
+                        Project = Path.GetFileName(importedFilePath),
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(3, 10, 3, 50) // This range must be earlier in the file than the property to trigger looking in the import for a definition
+                    }
+                ],
+                PropertyGroups = [
+                    new PropertyGroup()
+                    {
+                        Properties = [ identifiedProperty ]
+                    }
+                ]
+            });
+        mockSymbolProvider
+            .Setup(provider => provider.GetFileSymbols(It.Is<string>((file) => file == importedFilePath)))
+            .Returns(new Project()
+            {
+                PropertyGroups = [
+                    new PropertyGroup()
+                    {
+                        Properties = [ importedProperty ]
+                    }
+                ]
+            });
+
+        var symbolResolver = new SymbolResolver(NullLogger<ISymbolResolver>.Instance, mockSymbolProvider.Object);
+
+        var symbolDefinitionLocation = symbolResolver.ResolveDefinitionForSymbol(identifiedProperty, initialFilePath);
+
+        mockSymbolProvider.Verify(provider => provider.GetFileSymbols(It.Is<string>((filePath) => filePath == initialFilePath)), Times.Once);
+        mockSymbolProvider.Verify(provider => provider.GetFileSymbols(It.Is<string>((filePath) => filePath == importedFilePath)), Times.Once);
+        Assert.NotNull(symbolDefinitionLocation);
+        Assert.Equal(importedFilePath, symbolDefinitionLocation.Uri.ToUri().LocalPath);
+        Assert.Equal(importedProperty.Range, symbolDefinitionLocation.Range);
     }
 }

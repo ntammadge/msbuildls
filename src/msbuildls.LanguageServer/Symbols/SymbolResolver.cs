@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using msbuildls.LanguageServer.Extensions;
@@ -21,6 +22,12 @@ internal class SymbolResolver : ISymbolResolver
 
     public Location? ResolveDefinitionForSymbol(IElementWithRange deserializedSymbol, string fileScope)
     {
+        // Only properties are supported at the moment
+        if (deserializedSymbol is not Property)
+        {
+            return null;
+        }
+
         var fileSymbols = _symbolProvider.GetFileSymbols(fileScope);
         if (fileSymbols == null)
         {
@@ -31,25 +38,66 @@ internal class SymbolResolver : ISymbolResolver
         // Imports and properties are evaluated in order by appearance in the file
         // If a property appears before an import which contains an assignment to the same property, the position before the import is the definition.
         // If a property appears after an import which contains an assignment to the same property, the position in the imported file is the definition
-        // TODO: Add range data to imports in order to order their appearances with properties accordingly
+        var definitionSources = new List<IElementWithRange>();
+        definitionSources.AddRange(fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties ?? []) ?? []);
+        definitionSources.AddRange(fileSymbols.Imports ?? []);
+        definitionSources.AddRange(fileSymbols.ImportGroups?.SelectMany(importGroup => importGroup.Imports ?? []) ?? []);
+        var fileScopeDirectory = new FileInfo(fileScope).Directory.FullName;
 
-        // Prioritize project-level references over target-level references
-        var propertyReferences = fileSymbols.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == (deserializedSymbol as Property).Name) ?? []) ?? [];
-        if (!propertyReferences.Any())
+        foreach (var element in definitionSources.OrderBy(element => element.Range.Start))
         {
-            propertyReferences = fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties?.Where(property => property.Name == (deserializedSymbol as Property).Name) ?? []) ?? []);
+            // If the current element is a property, check if it has the same name
+            // TODO: consider a where filter when getting properties
+            if (element is Property potentialProperty && deserializedSymbol is Property deserializedProperty && deserializedProperty.Name == potentialProperty.Name)
+            {
+                return new Location()
+                {
+                    Uri = new Uri(fileScope),
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                        potentialProperty.Range.Start.Line,
+                        potentialProperty.Range.Start.Character,
+                        potentialProperty.Range.End.Line,
+                        potentialProperty.Range.End.Character)
+                };
+            }
+            // Check contents of import to see if a definition exists
+            else if (element is Import import)
+            {
+                var importFileScope = import.Project;
+                if (!Path.IsPathFullyQualified(importFileScope))
+                {
+                    importFileScope = Path.GetFullPath(Path.Combine(fileScopeDirectory, importFileScope));
+                }
+                // File exists check is unnecessary because we're pulling symbols from the symbol store rather than directly from the file
+
+                var definitionFromImport = ResolveDefinitionForSymbol(deserializedSymbol, importFileScope);
+                if (definitionFromImport != null)
+                {
+                    return definitionFromImport;
+                }
+            }
         }
-        var propDefinition = propertyReferences?.OrderBy(property => property.Range.Start.Line).First();
 
-        return new Location()
+        var targetDefinitionSources = (fileSymbols.Targets?.SelectMany(target => target.PropertyGroups?.SelectMany(propGroup => propGroup.Properties ?? []) ?? []) ?? []).OrderBy(property => property.Range.Start);
+        foreach (var element in targetDefinitionSources)
         {
-            Uri = new Uri(fileScope),
-            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                propDefinition.Range.Start.Line,
-                propDefinition.Range.Start.Character,
-                propDefinition.Range.End.Line,
-                propDefinition.Range.End.Character)
-        };
+            if (element is Property potentialProperty && deserializedSymbol is Property deserializedProperty && deserializedProperty.Name == potentialProperty.Name)
+            {
+                return new Location()
+                {
+                    Uri = new Uri(fileScope),
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                        potentialProperty.Range.Start.Line,
+                        potentialProperty.Range.Start.Character,
+                        potentialProperty.Range.End.Line,
+                        potentialProperty.Range.End.Character)
+                };
+            }
+        }
+
+        // No symbol definitions were found
+        // Should never get here in the top-level scope because a reference/definition had to exist to check for definitions in the first place
+        return null;
     }
 
     public IElementWithRange? ResolveSymbolAtLocation(string filePath, Position position)
