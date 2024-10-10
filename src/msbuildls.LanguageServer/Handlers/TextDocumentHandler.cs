@@ -68,7 +68,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
         imports.AddRange(fileSymbols.ImportGroups?.SelectMany(importGroup => importGroup.Imports ?? []) ?? []);
         var importingFileDirectory = new FileInfo(importingFile).Directory.FullName; // TODO: figure out when this could be null
 
-        foreach (var import in imports) // TODO: Order by appearance in the file
+        foreach (var import in imports.OrderBy(imp => imp.Range.Start))
         {
             var importPath = import.Project;
             if (!Path.IsPathFullyQualified(importPath))
