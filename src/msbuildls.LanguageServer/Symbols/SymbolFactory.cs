@@ -23,6 +23,8 @@ internal class SymbolFactory : ISymbolFactory
     private readonly int _symbolOffset = -1;
     private readonly ILogger<ISymbolFactory> _logger;
 
+    private const string BeginningDeserializationMessage = "Beginning deserialization of {filePath}";
+
     public SymbolFactory(ILogger<ISymbolFactory> logger)
     {
         _logger = logger;
@@ -30,23 +32,34 @@ internal class SymbolFactory : ISymbolFactory
 
     public Project? ParseDocument(TextDocumentItem textDocumentItem)
     {
-        var documentPath = textDocumentItem.Uri.Path;
-        _logger.LogInformation("Beginning deserialization of {documentPath}", documentPath);
+        _logger.LogInformation(BeginningDeserializationMessage, textDocumentItem.Uri.ToUri().LocalPath);
 
+        return DeserializeText(textDocumentItem.Text);
+    }
+
+    public Project? ParseFile(string filePath)
+    {
+        _logger.LogInformation(BeginningDeserializationMessage, filePath);
+
+        var text = File.ReadAllText(filePath);
+
+        return DeserializeText(text);
+    }
+
+    private Project? DeserializeText(string text)
+    {
         var serializer = new XmlSerializer(typeof(Project));
-
-        using var reader = new StringReader(textDocumentItem.Text);
+        using var reader = new StringReader(text);
         Project? project = null;
 
         try
         {
             project = (Project?)serializer.Deserialize(reader);
-            _logger.LogInformation("Completed deserialization of {documentPath}", documentPath);
+            _logger.LogInformation("Deserialization completed successfully");
         }
-        catch(Exception e)
+        catch (Exception e)
         {
-            // Should the inner exception be used?
-            _logger.LogError("Unable to deserialize {documentPath}. Exception encountered: {exception}", documentPath, e.Message);
+            _logger.LogError("Deserialization failed. Encountered an error: {exception}", e.Message);
         }
 
         return project;
@@ -73,15 +86,12 @@ internal class SymbolFactory : ISymbolFactory
             ?.SelectMany(propGroup => propGroup.Properties
                 ?.Select(property =>
                 {
-                    var startPos = new Position(property.StartLine + _symbolOffset, property.StartChar + _symbolOffset);
-                    var endPos = new Position(property.EndLine + _symbolOffset, property.EndChar + _symbolOffset);
-
                     return new DocumentSymbol()
                     {
                         Name = property.Name,
                         Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos.Line, startPos.Character, startPos.Line, startPos.Character + property.Name.Length)
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.End.Line, property.Range.End.Character),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.Start.Line, property.Range.Start.Character + property.Name.Length)
                     };
                 }) ?? []) ?? [];
     }

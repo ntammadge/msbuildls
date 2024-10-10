@@ -1,0 +1,8 @@
+<!-- This file is not read directly during testing. It exists to demonstrate what the file contents could look like a real scenario -->
+<Project>
+    <Import Project="imported.targets"/>
+
+    <PropertyGroup>
+        <TestProperty>testvalue</TestProperty>
+    </PropertyGroup>
+</Project>

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         return services
             .AddSingleton<ISymbolFactory, SymbolFactory>()
-            .AddSingleton<ISymbolProvider, SymbolProvider>();
+            .AddSingleton<ISymbolProvider, SymbolProvider>()
+            .AddSingleton<ISymbolResolver, SymbolResolver>();
     }
 }

@@ -27,10 +27,7 @@ public class SymbolFactoryTests
         {
             Name = "TestProperty",
             Value = "testValue",
-            StartLine = 1,
-            StartChar = 2,
-            EndLine = 1,
-            EndChar = 30,
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(1, 2, 1, 30)
         };
         var project = new Project()
         {
@@ -49,14 +46,14 @@ public class SymbolFactoryTests
         Assert.NotNull(propertySymbol.DocumentSymbol);
         Assert.Null(propertySymbol.SymbolInformation);
         Assert.Equal(property.Name, propertySymbol.DocumentSymbol.Name);
-        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.Range.Start.Line);
-        Assert.Equal(property.StartChar + _symbolOffset, propertySymbol.DocumentSymbol.Range.Start.Character);
-        Assert.Equal(property.EndLine + _symbolOffset, propertySymbol.DocumentSymbol.Range.End.Line);
-        Assert.Equal(property.EndChar + _symbolOffset, propertySymbol.DocumentSymbol.Range.End.Character);
-        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.Start.Line);
-        Assert.Equal(property.StartChar + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.Start.Character);
-        Assert.Equal(property.StartLine + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Line);
-        Assert.Equal(property.StartChar + property.Name.Length + _symbolOffset, propertySymbol.DocumentSymbol.SelectionRange.End.Character);
+        Assert.Equal(property.Range.Start.Line, propertySymbol.DocumentSymbol.Range.Start.Line);
+        Assert.Equal(property.Range.Start.Character, propertySymbol.DocumentSymbol.Range.Start.Character);
+        Assert.Equal(property.Range.End.Line, propertySymbol.DocumentSymbol.Range.End.Line);
+        Assert.Equal(property.Range.End.Character, propertySymbol.DocumentSymbol.Range.End.Character);
+        Assert.Equal(property.Range.Start.Line, propertySymbol.DocumentSymbol.SelectionRange.Start.Line);
+        Assert.Equal(property.Range.Start.Character, propertySymbol.DocumentSymbol.SelectionRange.Start.Character);
+        Assert.Equal(property.Range.Start.Line, propertySymbol.DocumentSymbol.SelectionRange.End.Line);
+        Assert.Equal(property.Range.Start.Character + property.Name.Length, propertySymbol.DocumentSymbol.SelectionRange.End.Character);
         Assert.Null(propertySymbol.DocumentSymbol.Children);
     }
 
@@ -72,10 +69,7 @@ public class SymbolFactoryTests
         {
             Name = "TestProperty",
             Value = "testValue",
-            StartLine = startLine,
-            StartChar = startChar,
-            EndLine = endLine,
-            EndChar = endChar,
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startLine, startChar, endLine, endChar)
         };
         var project = new Project()
         {
@@ -89,10 +83,10 @@ public class SymbolFactoryTests
 
         symbolFactory.SymbolsForFile(project);
 
-        Assert.Equal(startLine, property.StartLine);
-        Assert.Equal(startChar, property.StartChar);
-        Assert.Equal(endLine, property.EndLine);
-        Assert.Equal(endChar, property.EndChar);
+        Assert.Equal(startLine, property.Range.Start.Line);
+        Assert.Equal(startChar, property.Range.Start.Character);
+        Assert.Equal(endLine, property.Range.End.Line);
+        Assert.Equal(endChar, property.Range.End.Character);
     }
 
     [Fact]
@@ -110,6 +104,21 @@ public class SymbolFactoryTests
         var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
         Assert.NotNull(fileSymbols);
         Assert.Null(fileSymbols.PropertyGroups);
+    }
+
+    [Fact]
+    public void CanParseFileFromPath()
+    {
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+        var testFilePath = GetFullyQualifiedTestDataFilePath("property.props");
+
+        var fileSymbols = symbolFactory.ParseFile(testFilePath);
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.PropertyGroups);
+        var propGroup = Assert.Single(fileSymbols.PropertyGroups);
+        Assert.NotNull(propGroup.Properties);
+        var property = Assert.Single(propGroup.Properties);
+        Assert.Equal("TestProperty", property.Name);
     }
 
     [Fact]
@@ -133,10 +142,7 @@ public class SymbolFactoryTests
         {
             Name = "TestProperty",
             Value = "testValue",
-            StartLine = 3,
-            StartChar = 10,
-            EndLine = 3,
-            EndChar = 46
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(2, 9, 2, 45)
         };
 
         var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
@@ -156,10 +162,10 @@ public class SymbolFactoryTests
         var parsedProperty = Assert.Single(propGroup.Properties);
         Assert.Equal(expectedProperty.Name, parsedProperty.Name);
         Assert.Equal(expectedProperty.Value, parsedProperty.Value);
-        Assert.Equal(expectedProperty.StartLine, parsedProperty.StartLine);
-        Assert.Equal(expectedProperty.StartChar, parsedProperty.StartChar);
-        Assert.Equal(expectedProperty.EndLine, parsedProperty.EndLine);
-        Assert.Equal(expectedProperty.EndChar, parsedProperty.EndChar);
+        Assert.Equal(expectedProperty.Range.Start.Line, parsedProperty.Range.Start.Line);
+        Assert.Equal(expectedProperty.Range.Start.Character, parsedProperty.Range.Start.Character);
+        Assert.Equal(expectedProperty.Range.End.Line, parsedProperty.Range.End.Line);
+        Assert.Equal(expectedProperty.Range.End.Character, parsedProperty.Range.End.Character);
     }
 
     [Fact]
@@ -272,10 +278,7 @@ public class SymbolFactoryTests
         var testProperty = new Property()
         {
             Name = "TargetProperty",
-            StartLine = 4,
-            StartChar = 14,
-            EndLine = 4,
-            EndChar = 54
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(4, 14, 4, 54)
         };
         var testTarget = new Target()
         {
@@ -383,5 +386,34 @@ public class SymbolFactoryTests
         Assert.NotNull(deserializedImportGroup.Imports);
         var deserializedImport = Assert.Single(deserializedImportGroup.Imports);
         Assert.Equal(import.Project, deserializedImport.Project);
+    }
+
+    [Fact]
+    public void CanDeserializeImportWithAttributesOnMultipleLines()
+    {
+        var import = new Import()
+        {
+            Project = "Conditional.targets",
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(1, 5, 2, 28)
+        };
+
+        var symbolFactory = new SymbolFactory(NullLogger<ISymbolFactory>.Instance);
+
+        var testFilePath = GetFullyQualifiedTestDataFilePath("conditionalImport.targets");
+
+        var textDocumentItem = new TextDocumentItem()
+        {
+            Uri = new Uri(testFilePath),
+            Text = File.ReadAllText(testFilePath)
+        };
+
+        var fileSymbols = symbolFactory.ParseDocument(textDocumentItem);
+
+        Assert.NotNull(fileSymbols);
+        Assert.NotNull(fileSymbols.Imports);
+        var parsedImport = Assert.Single(fileSymbols.Imports);
+        Assert.NotNull(parsedImport);
+        Assert.Equal(import.Project, parsedImport.Project);
+        Assert.Equal(import.Range, parsedImport.Range);
     }
 }

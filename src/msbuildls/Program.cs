@@ -32,6 +32,7 @@ var server = await LanguageServer.From(
                 .SetMinimumLevel(LogLevel.Debug)
             )
             .AddTextDocumentHandlers()
+            .AddCommandHandlers()
             .WithServices(services =>
             {
                 services

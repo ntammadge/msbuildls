@@ -18,7 +18,7 @@ public class TextDocumentSymbolsHandlerTests
     {
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -27,10 +27,7 @@ public class TextDocumentSymbolsHandlerTests
         {
             Name = "TestProperty",
             Value = "SomeValue",
-            StartLine = 3,
-            StartChar = 10,
-            EndLine = 3,
-            EndChar = 40 // Note: not required to be realistic for this test
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(3, 10, 3, 40) // Note: not required to be realistic for this test
         };
 
         var fileSymbols = new Project()
@@ -50,7 +47,7 @@ public class TextDocumentSymbolsHandlerTests
         mockSymbolProvider
             .Setup(provider => provider.GetFileSymbols(It.IsAny<string>()))
             .Returns(fileSymbols)
-            .Callback<string>((filePath) => Assert.Equal(request.TextDocument.Uri.Path, filePath));
+            .Callback<string>((filePath) => Assert.Equal(request.TextDocument.Uri.ToUri().LocalPath, filePath));
 
         var mockSymbolFactory = new Mock<ISymbolFactory>();
         mockSymbolFactory
@@ -62,8 +59,8 @@ public class TextDocumentSymbolsHandlerTests
                     {
                         Name = property.Name,
                         Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.StartLine, property.StartChar, property.EndLine, property.EndChar),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.StartLine, property.StartChar, property.StartLine, property.StartChar + property.Name.Length)
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.End.Line, property.Range.End.Character),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.Start.Line, property.Range.Start.Character + property.Name.Length)
                     })
                 }))
             .Callback<Project>((inputSymbols) => Assert.Equal(fileSymbols, inputSymbols));
@@ -80,14 +77,14 @@ public class TextDocumentSymbolsHandlerTests
         Assert.NotNull(symbol.DocumentSymbol);
         Assert.Null(symbol.SymbolInformation);
         Assert.Equal(property.Name, symbol.DocumentSymbol.Name);
-        Assert.Equal(property.StartLine, symbol.DocumentSymbol.Range.Start.Line);
-        Assert.Equal(property.StartChar, symbol.DocumentSymbol.Range.Start.Character);
-        Assert.Equal(property.EndLine, symbol.DocumentSymbol.Range.End.Line);
-        Assert.Equal(property.EndChar, symbol.DocumentSymbol.Range.End.Character);
-        Assert.Equal(property.StartLine, symbol.DocumentSymbol.SelectionRange.Start.Line);
-        Assert.Equal(property.StartChar, symbol.DocumentSymbol.SelectionRange.Start.Character);
-        Assert.Equal(property.StartLine, symbol.DocumentSymbol.SelectionRange.End.Line);
-        Assert.Equal(property.StartChar + property.Name.Length, symbol.DocumentSymbol.SelectionRange.End.Character);
+        Assert.Equal(property.Range.Start.Line, symbol.DocumentSymbol.Range.Start.Line);
+        Assert.Equal(property.Range.Start.Character, symbol.DocumentSymbol.Range.Start.Character);
+        Assert.Equal(property.Range.End.Line, symbol.DocumentSymbol.Range.End.Line);
+        Assert.Equal(property.Range.End.Character, symbol.DocumentSymbol.Range.End.Character);
+        Assert.Equal(property.Range.Start.Line, symbol.DocumentSymbol.SelectionRange.Start.Line);
+        Assert.Equal(property.Range.Start.Character, symbol.DocumentSymbol.SelectionRange.Start.Character);
+        Assert.Equal(property.Range.Start.Line, symbol.DocumentSymbol.SelectionRange.End.Line);
+        Assert.Equal(property.Range.Start.Character + property.Name.Length, symbol.DocumentSymbol.SelectionRange.End.Character);
     }
 
     [Fact]
@@ -95,7 +92,7 @@ public class TextDocumentSymbolsHandlerTests
     {
         var docSymbolParams = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\test.targets")
             }
@@ -105,7 +102,7 @@ public class TextDocumentSymbolsHandlerTests
         mockSymbolProvider
             .Setup(provider => provider.GetFileSymbols(It.IsAny<string>()))
             .Returns(default(Project?))
-            .Callback<string>(docPath => Assert.Equal(docSymbolParams.TextDocument.Uri.Path, docPath));
+            .Callback<string>(docPath => Assert.Equal(docSymbolParams.TextDocument.Uri.ToUri().LocalPath, docPath));
 
         var mockSymbolFactory = new Mock<ISymbolFactory>();
         var logger = NullLogger<TextDocumentSymbolsHandler>.Instance;
@@ -129,19 +126,13 @@ public class TextDocumentSymbolsHandlerTests
         {
             Name = "FirstProperty",
             Value = "FirstValue",
-            StartLine = 3,
-            StartChar = 10,
-            EndLine = 3,
-            EndChar = 40
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(3, 10, 3, 40)
         };
         var property2 = new Property()
         {
             Name = "FirstProperty", // Matching name to the first property required to represent the same symbol
             Value = "SecondValue",
-            StartLine = 4,
-            StartChar = 10,
-            EndLine = 4,
-            EndChar = 40
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(4, 10, 4, 40)
         };
         var fileSymbols = new Project()
         {
@@ -173,22 +164,22 @@ public class TextDocumentSymbolsHandlerTests
                     {
                         Name = property1.Name,
                         Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.StartLine, property1.StartChar, property1.EndLine, property1.EndChar),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.StartLine, property1.StartChar, property1.StartLine, property1.StartChar + property1.Name.Length)
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.Range.Start.Line, property1.Range.Start.Character, property1.Range.End.Line, property1.Range.End.Character),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property1.Range.Start.Line, property1.Range.Start.Character, property1.Range.Start.Line, property1.Range.Start.Character + property1.Name.Length)
                     }),
                     SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                     {
                         Name = property2.Name,
                         Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.StartLine, property2.StartChar, property2.EndLine, property2.EndChar),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.StartLine, property2.StartChar, property2.StartLine, property2.StartChar + property2.Name.Length)
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.Range.Start.Line, property2.Range.Start.Character, property2.Range.End.Line, property2.Range.End.Character),
+                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property2.Range.Start.Line, property2.Range.Start.Character, property2.Range.Start.Line, property2.Range.Start.Character + property2.Name.Length)
                     })
                 }));
 
         var handler = new TextDocumentSymbolsHandler(logger, mockSymbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -202,7 +193,7 @@ public class TextDocumentSymbolsHandlerTests
         Assert.Null(symbol.SymbolInformation);
         // Confirming the name and start line are appropriate. The rest of the symbol location/range unnecessary
         Assert.Equal(property1.Name, symbol.DocumentSymbol.Name);
-        Assert.Equal(property1.StartLine, symbol.DocumentSymbol.Range.Start.Line);
+        Assert.Equal(property1.Range.Start.Line, symbol.DocumentSymbol.Range.Start.Line);
     }
 
     [Fact]
@@ -213,18 +204,12 @@ public class TextDocumentSymbolsHandlerTests
         var projectProperty = new Property()
         {
             Name = "TestProperty",
-            StartLine = 3,
-            StartChar = 10,
-            EndLine = 3,
-            EndChar = 40
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(3, 10, 3 ,40)
         };
         var targetProperty = new Property()
         {
             Name = projectProperty.Name, // Must have the same name as the project-level property for a valid test
-            StartLine = 7,
-            StartChar = 14,
-            EndLine = 7,
-            EndChar = 44
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(7, 14, 7, 44)
         };
         var target = new Target()
         {
@@ -268,8 +253,8 @@ public class TextDocumentSymbolsHandlerTests
                 {
                     Name = projectProperty.Name,
                     Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.EndLine, projectProperty.EndChar),
-                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.StartLine, projectProperty.StartChar + projectProperty.Name.Length)
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.Range.Start.Line, projectProperty.Range.Start.Character, projectProperty.Range.End.Line, projectProperty.Range.End.Character),
+                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.Range.Start.Line, projectProperty.Range.Start.Character, projectProperty.Range.Start.Line, projectProperty.Range.Start.Character + projectProperty.Name.Length)
                 }),
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
@@ -283,8 +268,8 @@ public class TextDocumentSymbolsHandlerTests
                         {
                             Name = targetProperty.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.End.Line, targetProperty.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.Start.Line, targetProperty.Range.Start.Character + targetProperty.Name.Length)
                         }
                     }
                 })
@@ -293,7 +278,7 @@ public class TextDocumentSymbolsHandlerTests
         var handler = new TextDocumentSymbolsHandler(logger, symbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -304,7 +289,7 @@ public class TextDocumentSymbolsHandlerTests
         Assert.NotNull(result);
         var foundProperty = Assert.Single(result, symbol => symbol.DocumentSymbol?.Name == projectProperty.Name);
         Assert.NotNull(foundProperty.DocumentSymbol);
-        Assert.Equal(projectProperty.StartLine, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the reference in the target
+        Assert.Equal(projectProperty.Range.Start.Line, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the reference in the target
     }
 
     [Fact]
@@ -315,18 +300,12 @@ public class TextDocumentSymbolsHandlerTests
         var projectProperty = new Property()
         {
             Name = "TestProperty",
-            StartLine = 3,
-            StartChar = 10,
-            EndLine = 3,
-            EndChar = 40
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(3, 10, 3, 40)
         };
         var targetProperty = new Property()
         {
             Name = "TargetProperty", // Must have a different name as the project-level property for a valid test
-            StartLine = 7,
-            StartChar = 14,
-            EndLine = 7,
-            EndChar = 44
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(7, 14, 7, 44)
         };
         var target = new Target()
         {
@@ -367,8 +346,8 @@ public class TextDocumentSymbolsHandlerTests
                 {
                     Name = projectProperty.Name,
                     Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.EndLine, projectProperty.EndChar),
-                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.StartLine, projectProperty.StartChar, projectProperty.StartLine, projectProperty.StartChar + projectProperty.Name.Length)
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.Range.Start.Line, projectProperty.Range.Start.Character, projectProperty.Range.End.Line, projectProperty.Range.End.Character),
+                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(projectProperty.Range.Start.Line, projectProperty.Range.Start.Character, projectProperty.Range.Start.Line, projectProperty.Range.Start.Character + projectProperty.Name.Length)
                 }),
                 SymbolInformationOrDocumentSymbol.Create(new DocumentSymbol()
                 {
@@ -382,8 +361,8 @@ public class TextDocumentSymbolsHandlerTests
                         {
                             Name = targetProperty.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.End.Line, targetProperty.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.Start.Line, targetProperty.Range.Start.Character + targetProperty.Name.Length)
                         }
                     }
                 })
@@ -392,7 +371,7 @@ public class TextDocumentSymbolsHandlerTests
         var handler = new TextDocumentSymbolsHandler(logger, symbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -412,18 +391,12 @@ public class TextDocumentSymbolsHandlerTests
         var targetProperty = new Property()
         {
             Name = "TestProperty",
-            StartLine = 7,
-            StartChar = 14,
-            EndLine = 7,
-            EndChar = 44
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(7, 14, 7, 44)
         };
         var targetProperty2 = new Property()
         {
             Name = targetProperty.Name,
-            StartLine = targetProperty.StartLine + 1,
-            StartChar = targetProperty.StartChar,
-            EndLine = targetProperty.StartLine + 1,
-            EndChar = targetProperty.EndChar
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line + 1, targetProperty.Range.Start.Character, targetProperty.Range.End.Line + 1, targetProperty.Range.End.Character)
         };
         var target = new Target()
         {
@@ -465,15 +438,15 @@ public class TextDocumentSymbolsHandlerTests
                         {
                             Name = targetProperty.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.EndLine, targetProperty.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.StartLine, targetProperty.StartChar, targetProperty.StartLine, targetProperty.StartChar + targetProperty.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.End.Line, targetProperty.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty.Range.Start.Line, targetProperty.Range.Start.Character, targetProperty.Range.Start.Line, targetProperty.Range.Start.Character + targetProperty.Name.Length)
                         },
                         new DocumentSymbol()
                         {
                             Name = targetProperty2.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.EndLine, targetProperty2.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.StartLine, targetProperty2.StartChar + targetProperty2.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character, targetProperty2.Range.End.Line, targetProperty2.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character, targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character + targetProperty2.Name.Length)
                         }
                     }
                 })
@@ -482,7 +455,7 @@ public class TextDocumentSymbolsHandlerTests
         var handler = new TextDocumentSymbolsHandler(logger, symbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -493,7 +466,7 @@ public class TextDocumentSymbolsHandlerTests
         Assert.NotNull(result);
         var foundProperty = Assert.Single(result, symbol => symbol.DocumentSymbol?.Name == targetProperty.Name);
         Assert.NotNull(foundProperty.DocumentSymbol);
-        Assert.Equal(targetProperty.StartLine, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the second reference in the target
+        Assert.Equal(targetProperty.Range.Start.Line, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the second reference in the target
     }
 
     [Fact]
@@ -504,10 +477,7 @@ public class TextDocumentSymbolsHandlerTests
         var targetProperty1 = new Property()
         {
             Name = "TestProperty",
-            StartLine = 7,
-            StartChar = 14,
-            EndLine = 7,
-            EndChar = 44
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(7, 14, 7, 44)
         };
         var target1 = new Target()
         {
@@ -525,10 +495,7 @@ public class TextDocumentSymbolsHandlerTests
         var targetProperty2 = new Property()
         {
             Name = targetProperty1.Name, // Must have the same name as the first target property for a valid test
-            StartLine = 12,
-            StartChar = 14,
-            EndLine = 12,
-            EndChar = 44
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(12, 14, 12, 44)
         };
         var target2 = new Target()
         {
@@ -570,8 +537,8 @@ public class TextDocumentSymbolsHandlerTests
                         {
                             Name = targetProperty1.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.StartLine, targetProperty1.StartChar, targetProperty1.EndLine, targetProperty1.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.StartLine, targetProperty1.StartChar, targetProperty1.StartLine, targetProperty1.StartChar + targetProperty1.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.Range.Start.Line, targetProperty1.Range.Start.Character, targetProperty1.Range.End.Line, targetProperty1.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty1.Range.Start.Line, targetProperty1.Range.Start.Character, targetProperty1.Range.Start.Line, targetProperty1.Range.Start.Character + targetProperty1.Name.Length)
                         }
                     }
                 }),
@@ -587,8 +554,8 @@ public class TextDocumentSymbolsHandlerTests
                         {
                             Name = targetProperty2.Name,
                             Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.EndLine, targetProperty2.EndChar),
-                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.StartLine, targetProperty2.StartChar, targetProperty2.StartLine, targetProperty2.StartChar + targetProperty2.Name.Length)
+                            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character, targetProperty2.Range.End.Line, targetProperty2.Range.End.Character),
+                            SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character, targetProperty2.Range.Start.Line, targetProperty2.Range.Start.Character + targetProperty2.Name.Length)
                         }
                     }
                 })
@@ -597,7 +564,7 @@ public class TextDocumentSymbolsHandlerTests
         var handler = new TextDocumentSymbolsHandler(logger, symbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
@@ -608,7 +575,7 @@ public class TextDocumentSymbolsHandlerTests
         Assert.NotNull(result);
         var foundProperty = Assert.Single(result, symbol => symbol.DocumentSymbol?.Name == targetProperty1.Name);
         Assert.NotNull(foundProperty.DocumentSymbol);
-        Assert.Equal(targetProperty1.StartLine, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the reference in the second target
+        Assert.Equal(targetProperty1.Range.Start.Line, foundProperty.DocumentSymbol.Range.Start.Line); // Ensure we find the symbol at the correct line, indicating we filtered out the reference in the second target
     }
 
     [Fact]
@@ -662,7 +629,7 @@ public class TextDocumentSymbolsHandlerTests
         var handler = new TextDocumentSymbolsHandler(logger, symbolFactory.Object, mockSymbolProvider.Object);
         var request = new DocumentSymbolParams()
         {
-            TextDocument = new TextDocumentItem()
+            TextDocument = new TextDocumentIdentifier()
             {
                 Uri = new Uri(@"C:\SomeFile.targets")
             }
