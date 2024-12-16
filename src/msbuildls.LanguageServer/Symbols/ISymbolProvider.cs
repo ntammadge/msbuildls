@@ -1,4 +1,4 @@
-using msbuildls.LanguageServer.Symbols.MSBuild;
+using Microsoft.Build.Evaluation;
 
 namespace msbuildls.LanguageServer.Symbols;
 

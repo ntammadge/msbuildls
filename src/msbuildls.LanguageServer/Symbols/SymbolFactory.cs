@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Serialization;
+using System.Xml;
+using Microsoft.Build.Definition;
+using Microsoft.Build.Evaluation;
+using Microsoft.Build.Execution;
 using Microsoft.Extensions.Logging;
-using msbuildls.LanguageServer.Symbols.MSBuild;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
@@ -32,29 +34,53 @@ internal class SymbolFactory : ISymbolFactory
 
     public Project? ParseDocument(TextDocumentItem textDocumentItem)
     {
-        _logger.LogInformation(BeginningDeserializationMessage, textDocumentItem.Uri.ToUri().LocalPath);
+        var filePath = textDocumentItem.Uri.ToUri().LocalPath;
+        _logger.LogInformation(BeginningDeserializationMessage, filePath);
 
-        return DeserializeText(textDocumentItem.Text);
+        var project = DeserializeText(textDocumentItem.Text);
+
+        if (project != null)
+        {
+            project.FullPath = filePath;
+        }
+
+        return project;
     }
 
     public Project? ParseFile(string filePath)
     {
         _logger.LogInformation(BeginningDeserializationMessage, filePath);
 
-        var text = File.ReadAllText(filePath);
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
 
-        return DeserializeText(text);
+        var text = File.ReadAllText(filePath);
+        var project = DeserializeText(text);
+
+        if (project != null)
+        {
+            project.FullPath = filePath;
+        }
+
+        return project;
     }
 
     private Project? DeserializeText(string text)
     {
-        var serializer = new XmlSerializer(typeof(Project));
-        using var reader = new StringReader(text);
+        var readerSettings = new XmlReaderSettings()
+        {
+            IgnoreComments = false,
+            IgnoreWhitespace = false
+        };
+        using var reader = XmlReader.Create(new StringReader(text), readerSettings);
+
         Project? project = null;
 
         try
         {
-            project = (Project?)serializer.Deserialize(reader);
+            project = Project.FromXmlReader(reader, new ProjectOptions());
             _logger.LogInformation("Deserialization completed successfully");
         }
         catch (Exception e)
@@ -69,54 +95,41 @@ internal class SymbolFactory : ISymbolFactory
     {
         var documentSymbols = new List<DocumentSymbol>();
 
-        var propertySymbols = GetPropertySymbols(file.PropertyGroups);
-        documentSymbols.AddRange(GetPropertySymbols(file.PropertyGroups));
-
-        var targetSymbols = GetTargetSymbols(file.Targets);
-        documentSymbols.AddRange(GetTargetSymbols(file.Targets));
+        documentSymbols.AddRange(GetPropertySymbols(file.Properties));
+        documentSymbols.AddRange(GetTargetSymbols(file.Targets.Values));
 
         var symbols = documentSymbols.Select(symbol => SymbolInformationOrDocumentSymbol.Create(symbol));
         var symbolContainer = SymbolInformationOrDocumentSymbolContainer.From(symbols);
         return symbolContainer;
     }
 
-    private IEnumerable<DocumentSymbol> GetPropertySymbols(IEnumerable<PropertyGroup>? propertyGroups)
+    private IEnumerable<DocumentSymbol> GetPropertySymbols(IEnumerable<ProjectProperty> properties)
     {
-        return propertyGroups
-            ?.SelectMany(propGroup => propGroup.Properties
-                ?.Select(property =>
+        return properties
+            .Select(property =>
+            {
+                return new DocumentSymbol()
                 {
-                    return new DocumentSymbol()
-                    {
-                        Name = property.Name,
-                        Kind = (SymbolKind)MSBuildSymbolKind.Property,
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.End.Line, property.Range.End.Character),
-                        SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Range.Start.Line, property.Range.Start.Character, property.Range.Start.Line, property.Range.Start.Character + property.Name.Length)
-                    };
-                }) ?? []) ?? [];
+                    Name = property.Name,
+                    Kind = (SymbolKind)MSBuildSymbolKind.Property,
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Xml.Location.Line, property.Xml.Location.Column, property.Xml.Location.Line, property.Xml.Location.Column),
+                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(property.Xml.Location.Line, property.Xml.Location.Column, property.Xml.Location.Line, property.Xml.Location.Column)
+                };
+            });
     }
 
-    private IEnumerable<DocumentSymbol> GetTargetSymbols(IEnumerable<Target>? targets)
+    private IEnumerable<DocumentSymbol> GetTargetSymbols(IEnumerable<ProjectTargetInstance> targets)
     {
         return targets
-            ?.Select(target =>
+            .Select(target =>
             {
-                var startPos = new Position(target.StartPosition.Line + _symbolOffset, target.StartPosition.Character + _symbolOffset);
-                var endPos = new Position(target.EndPosition.Line + _symbolOffset, target.EndPosition.Character + _symbolOffset);
-
-                var nestedSymbols = new List<DocumentSymbol>();
-
-                var propertySymbols = GetPropertySymbols(target.PropertyGroups);
-                nestedSymbols.AddRange(propertySymbols);
-
                 return new DocumentSymbol()
                 {
                     Name = target.Name,
                     Kind = (SymbolKind)MSBuildSymbolKind.Target,
-                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, endPos),
-                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(startPos, startPos), // Set selection range to the start of the element because the name attribute may not be the first attribute
-                    Children = nestedSymbols.Any() ? nestedSymbols : null
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.Location.Line, target.Location.Column, target.Location.Line, target.Location.Column),
+                    SelectionRange = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(target.Location.Line, target.Location.Column, target.Location.Line, target.Location.Column),
                 };
-            }) ?? [];
+            });
     }
 }

@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Build" Version="17.11.4" />
     <PackageReference Include="OmniSharp.Extensions.LanguageProtocol" Version="0.19.9" />
   </ItemGroup>
 

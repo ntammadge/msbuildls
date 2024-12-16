@@ -1,4 +1,4 @@
-using msbuildls.LanguageServer.Symbols.MSBuild;
+using Microsoft.Build.Evaluation;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace msbuildls.LanguageServer.Symbols;
